@@ -1,4 +1,22 @@
-import type { Task } from './types';
+import type { Task, User, Project, Team, Ticket } from './types';
+
+export const MOCK_USERS: User[] = [
+  { id: 'user-1', name: 'Admin User', role: 'admin', avatar: 'https://picsum.photos/seed/admin/50' },
+  { id: 'user-2', name: 'Team Lead Tina', role: 'team-lead', avatar: 'https://picsum.photos/seed/tina/50' },
+  { id: 'user-3', name: 'Member Mike', role: 'member', avatar: 'https://picsum.photos/seed/mike/50' },
+  { id: 'user-4', name: 'Member Mary', role: 'member', avatar: 'https://picsum.photos/seed/mary/50' },
+  { id: 'user-5', name: 'Lead Larry', role: 'team-lead', avatar: 'https://picsum.photos/seed/larry/50' },
+];
+
+export const MOCK_TEAMS: Team[] = [
+    { id: 'team-1', name: 'Frontend Wizards', members: [MOCK_USERS[1], MOCK_USERS[2]] },
+    { id: 'team-2', name: 'Backend Brigade', members: [MOCK_USERS[4], MOCK_USERS[3]] },
+];
+
+export const MOCK_PROJECTS: Project[] = [
+  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamId: 'team-1', leadId: 'user-2' },
+  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamId: 'team-2', leadId: 'user-5' },
+];
 
 export const MOCK_TASKS: Task[] = [
   {
@@ -8,6 +26,8 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],
     status: 'in-progress',
     priority: 'high',
+    projectId: 'proj-1',
+    assigneeId: 'user-3',
   },
   {
     id: 'task-2',
@@ -16,6 +36,8 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
     status: 'pending',
     priority: 'high',
+    projectId: 'proj-2',
+    assigneeId: 'user-4',
   },
   {
     id: 'task-3',
@@ -24,6 +46,8 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
     status: 'in-progress',
     priority: 'medium',
+    projectId: 'proj-2',
+    assigneeId: 'user-4',
   },
   {
     id: 'task-4',
@@ -32,6 +56,8 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString().split('T')[0],
     status: 'pending',
     priority: 'low',
+    projectId: 'proj-1',
+    assigneeId: 'user-3',
   },
   {
     id: 'task-5',
@@ -40,6 +66,7 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
     status: 'pending',
     priority: 'medium',
+    projectId: 'proj-1',
   },
   {
     id: 'task-6',
@@ -48,6 +75,8 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
     status: 'completed',
     priority: 'medium',
+    projectId: 'proj-1',
+    assigneeId: 'user-3',
   },
   {
     id: 'task-7',
@@ -56,6 +85,7 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0],
     status: 'pending',
     priority: 'high',
+    projectId: 'proj-2',
   },
   {
     id: 'task-8',
@@ -64,5 +94,11 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 12)).toISOString().split('T')[0],
     status: 'completed',
     priority: 'low',
+    projectId: 'proj-1',
   },
+];
+
+export const MOCK_TICKETS: Ticket[] = [
+    { id: 'ticket-1', taskId: 'task-1', raisedBy: 'user-3', message: 'I need access to the Figma files.', status: 'open'},
+    { id: 'ticket-2', taskId: 'task-2', raisedBy: 'user-4', message: 'Which hashing algorithm should I use?', status: 'open'},
 ];

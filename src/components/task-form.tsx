@@ -30,6 +30,9 @@ import {
   type TaskStatus,
 } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
+import { MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS } from '@/lib/mock-data';
+import { useUser } from '@/context/user-context';
+import { useMemo } from 'react';
 
 const taskFormSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters.'),
@@ -39,6 +42,8 @@ const taskFormSchema = z.object({
   }),
   status: z.enum(TASK_STATUSES),
   priority: z.enum(TASK_PRIORITIES),
+  projectId: z.string().min(1, 'Project is required.'),
+  assigneeId: z.string().optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -50,6 +55,18 @@ interface TaskFormProps {
 
 export function TaskForm({ initialData, onClose }: TaskFormProps) {
   const { addTask, updateTask } = useTasks();
+  const { user } = useUser();
+  
+  const availableProjects = useMemo(() => {
+    if (user?.role === 'admin') return MOCK_PROJECTS;
+    if (user?.role === 'team-lead') return MOCK_PROJECTS.filter(p => p.leadId === user.id);
+    return [];
+  }, [user]);
+
+  const availableUsers = useMemo(() => {
+    // In a real app, you'd fetch users based on the selected project's team
+    return MOCK_USERS.filter(u => u.role === 'member');
+  }, []);
 
   const defaultValues: Partial<TaskFormValues> = initialData
     ? {
@@ -62,6 +79,8 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
         status: 'pending',
         priority: 'medium',
         dueDate: new Date().toISOString().split('T')[0],
+        projectId: availableProjects[0]?.id || '',
+        assigneeId: '',
       };
 
   const form = useForm<TaskFormValues>({
@@ -112,6 +131,32 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
             </FormItem>
           )}
         />
+        
+        <FormField
+          control={form.control}
+          name="projectId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Project</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableProjects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
@@ -154,30 +199,57 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name="priority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {TASK_PRIORITIES.map((priority) => (
-                    <SelectItem key={priority} value={priority} className='capitalize'>
-                      {priority}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+            control={form.control}
+            name="priority"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Priority</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {TASK_PRIORITIES.map((priority) => (
+                        <SelectItem key={priority} value={priority} className='capitalize'>
+                        {priority}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+                control={form.control}
+                name="assigneeId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Assign To</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Assign to a member" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Unassigned</SelectItem>
+                          {availableUsers.map((user) => (
+                              <SelectItem key={user.id} value={user.id}>
+                                  {user.name}
+                              </SelectItem>
+                          ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit">{initialData ? 'Save Changes' : 'Add Task'}</Button>

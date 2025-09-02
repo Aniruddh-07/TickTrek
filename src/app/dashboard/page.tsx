@@ -23,15 +23,76 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/types';
+import { useUser } from '@/context/user-context';
+import { MOCK_PROJECTS, MOCK_TEAMS } from '@/lib/mock-data';
 
-export default function DashboardPage() {
-  const { tasks } = useTasks();
+function AdminDashboard({ tasks }: { tasks: Task[] }) {
+  const projectsWithProgress = useMemo(() => {
+    return MOCK_PROJECTS.map(project => {
+      const projectTasks = tasks.filter(t => t.projectId === project.id);
+      const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
+      const progress = projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0;
+      return { ...project, taskCount: projectTasks.length, progress };
+    });
+  }, [tasks]);
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-4 font-headline">Projects Overview</h2>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {projectsWithProgress.map(project => (
+          <div key={project.id} className="p-4 border rounded-lg bg-card">
+            <h3 className="font-bold">{project.name}</h3>
+            <p className="text-sm text-muted-foreground">{project.description}</p>
+            <div className="mt-4">
+              <p className="text-sm">Progress: {Math.round(project.progress)}%</p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-1">
+                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${project.progress}%` }}></div>
+              </div>
+              <p className="text-sm mt-2">{project.taskCount} tasks</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TeamLeadDashboard({ tasks, user }: { tasks: Task[], user: any }) {
+    const managedProjects = MOCK_PROJECTS.filter(p => p.leadId === user.id);
+    const projectIds = managedProjects.map(p => p.id);
+    const teamTasks = tasks.filter(t => projectIds.includes(t.projectId));
+
+    return (
+        <div>
+            <h2 className="text-2xl font-bold mb-4 font-headline">My Team's Tasks</h2>
+            <p className="mb-4 text-muted-foreground">You are leading {managedProjects.length} project(s).</p>
+            <FilteredTaskView tasks={teamTasks} />
+        </div>
+    );
+}
+
+function MemberDashboard({ tasks, user }: { tasks: Task[], user: any }) {
+    const myTasks = tasks.filter(t => t.assigneeId === user.id);
+    return (
+        <div>
+            <h2 className="text-2xl font-bold mb-4 font-headline">My Assigned Tasks</h2>
+            <FilteredTaskView tasks={myTasks} />
+        </div>
+    );
+}
+
+
+function FilteredTaskView({ tasks }: { tasks: Task[] }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
+
+  const { user } = useUser();
+  const canAddTask = user?.role === 'admin' || user?.role === 'team-lead';
+
 
   const handleAddTaskClick = () => {
     setEditingTask(undefined);
@@ -63,17 +124,19 @@ export default function DashboardPage() {
     <>
       <div className="flex flex-col sm:flex-row items-center gap-4">
         <div className="flex-1">
-          <h1 className="text-lg font-semibold md:text-2xl font-headline">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Here&apos;s a quick overview of your tasks.
-          </p>
+            <h1 className="text-lg font-semibold md:text-2xl font-headline">Task List</h1>
+            <p className="text-sm text-muted-foreground">
+                Here&apos;s a list of relevant tasks.
+            </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-           <Button onClick={handleAddTaskClick} className="ml-auto w-full sm:w-auto">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Task
-          </Button>
-        </div>
+        {canAddTask && (
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+             <Button onClick={handleAddTaskClick} className="ml-auto w-full sm:w-auto">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Task
+            </Button>
+          </div>
+        )}
       </div>
       
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -143,6 +206,30 @@ export default function DashboardPage() {
           </div>
         </SheetContent>
       </Sheet>
+    </>
+  )
+}
+
+export default function DashboardPage() {
+  const { user } = useUser();
+  const { tasks } = useTasks();
+
+  if (!user) return <p>Loading...</p>;
+  
+  return (
+    <>
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+            <div className="flex-1">
+                <h1 className="text-lg font-semibold md:text-2xl font-headline">Welcome, {user.name}!</h1>
+                <p className="text-sm text-muted-foreground">
+                    Here&apos;s what&apos;s happening in your workspace.
+                </p>
+            </div>
+        </div>
+
+        {user.role === 'admin' && <AdminDashboard tasks={tasks} />}
+        {user.role === 'team-lead' && <TeamLeadDashboard tasks={tasks} user={user} />}
+        {user.role === 'member' && <MemberDashboard tasks={tasks} user={user} />}
     </>
   );
 }

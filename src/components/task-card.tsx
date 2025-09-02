@@ -16,12 +16,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Calendar, EllipsisVertical, Trash2, FilePenLine, Circle, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, EllipsisVertical, Trash2, FilePenLine, Circle, CheckCircle, Clock, User, Ticket } from 'lucide-react';
 import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { MOCK_USERS } from '@/lib/mock-data';
+import { useUser } from '@/context/user-context';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+
 
 interface TaskCardProps {
   task: Task;
@@ -43,17 +47,23 @@ const statusIcons: Record<TaskStatus, React.ReactNode> = {
 
 export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCardProps) {
   const { deleteTask } = useTasks();
+  const { user } = useUser();
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('taskId', task.id);
   };
+  
+  const assignee = MOCK_USERS.find(u => u.id === task.assigneeId);
+
+  const canEditDelete = user?.role === 'admin' || user?.role === 'team-lead';
+  const canRaiseTicket = user?.role === 'member';
 
   return (
     <Card
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
       className={cn(
-        'transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.02]',
+        'transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.02] flex flex-col',
         priorityClasses[task.priority],
         'border-l-4',
         isDraggable ? 'cursor-grab active:cursor-grabbing' : ''
@@ -69,18 +79,29 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(task)}>
-                <FilePenLine className="mr-2 h-4 w-4" />
-                <span>Edit</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/40"
-                onClick={() => deleteTask(task.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
+              {canEditDelete && (
+                <>
+                  <DropdownMenuItem onClick={() => onEdit(task)}>
+                    <FilePenLine className="mr-2 h-4 w-4" />
+                    <span>Edit</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/40"
+                    onClick={() => deleteTask(task.id)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+               {canRaiseTicket && (
+                <DropdownMenuItem onClick={() => alert('Raise ticket functionality to be implemented')}>
+                  <Ticket className="mr-2 h-4 w-4" />
+                  <span>Raise Ticket</span>
+                </DropdownMenuItem>
+              )}
+              {!canEditDelete && !canRaiseTicket && <DropdownMenuItem disabled>No actions available</DropdownMenuItem>}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -88,7 +109,7 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
           <CardDescription className="pt-2">{task.description}</CardDescription>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="flex items-center text-sm text-muted-foreground">
           <Calendar className="mr-2 h-4 w-4" />
           <span>{format(new Date(task.dueDate), 'PPP')}</span>
@@ -100,6 +121,20 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
                 {statusIcons[task.status]}
                 {task.status.replace('-', ' ')}
             </Badge>
+            {assignee ? (
+                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Avatar className="h-6 w-6">
+                        <AvatarImage src={assignee.avatar} />
+                        <AvatarFallback>{assignee.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="hidden sm:inline">{assignee.name}</span>
+                </div>
+            ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    <span>Unassigned</span>
+                </div>
+            )}
         </div>
       </CardFooter>
     </Card>

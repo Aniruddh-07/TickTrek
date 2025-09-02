@@ -13,6 +13,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { useUser } from '@/context/user-context';
 
 interface KanbanColumnProps {
   status: TaskStatus;
@@ -67,11 +68,12 @@ function KanbanColumn({ status, tasks, onDrop, onTaskClick }: KanbanColumnProps)
   );
 }
 
-export default function KanbanBoard() {
-  const { tasks, updateTask } = useTasks();
+export default function KanbanBoard({tasks}: {tasks: Task[]}) {
+  const { updateTask } = useTasks();
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { user } = useUser();
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     setDraggedTaskId(taskId);
@@ -79,10 +81,8 @@ export default function KanbanBoard() {
   
   const handleDrop = (newStatus: TaskStatus) => {
     if (draggedTaskId) {
-      // Find the task that was dragged
       const taskToUpdate = tasks.find(task => task.id === draggedTaskId);
       
-      // Update its status only if the drop is on a different column
       if (taskToUpdate && taskToUpdate.status !== newStatus) {
         updateTask(draggedTaskId, { status: newStatus });
       }
@@ -90,7 +90,6 @@ export default function KanbanBoard() {
     setDraggedTaskId(null);
   };
   
-  // Intercept the drag start from the TaskCard
   const handleTaskDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     const taskId = e.dataTransfer.getData('taskId');
     if (taskId) {
@@ -99,8 +98,11 @@ export default function KanbanBoard() {
   };
 
   const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-    setIsSheetOpen(true);
+    // only allow editing for team leads and admins
+    if (user?.role === 'admin' || user?.role === 'team-lead') {
+      setEditingTask(task);
+      setIsSheetOpen(true);
+    }
   };
 
   const handleCloseSheet = () => {
