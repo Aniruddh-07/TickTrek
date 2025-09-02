@@ -24,44 +24,86 @@ import {
 } from '@/components/ui/select';
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/types';
 import { useUser } from '@/context/user-context';
-import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-function AdminDashboard({ tasks }: { tasks: Task[] }) {
-  const { projects } = useTasks();
-  
-  const projectsWithProgress = useMemo(() => {
-    return projects.map(project => {
-      const projectTasks = tasks.filter(t => t.projectId === project.id);
-      const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
-      const progress = projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0;
-      return { ...project, taskCount: projectTasks.length, progress };
+function AdminDashboard() {
+  const { tasks, projects, teams } = useTasks();
+
+  const teamProgress = useMemo(() => {
+    return teams.map(team => {
+      const teamProjects = projects.filter(p => p.teamId === team.id);
+      const teamProjectIds = teamProjects.map(p => p.id);
+      const teamTasks = tasks.filter(t => teamProjectIds.includes(t.projectId));
+      const completedTasks = teamTasks.filter(t => t.status === 'completed').length;
+      const progress = teamTasks.length > 0 ? (completedTasks / teamTasks.length) * 100 : 0;
+      
+      return {
+        name: team.name,
+        progress: Math.round(progress),
+        totalTasks: teamTasks.length,
+        completedTasks,
+      };
     });
+  }, [teams, projects, tasks]);
+  
+  const projectProgress = useMemo(() => {
+    return projects.map(project => {
+        const projectTasks = tasks.filter(t => t.projectId === project.id);
+        const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
+        const progress = projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0;
+
+        return {
+            name: project.name,
+            progress: Math.round(progress)
+        }
+    })
   }, [projects, tasks]);
 
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4 font-headline">Projects Overview</h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {projectsWithProgress.map(project => (
-          <div key={project.id} className="p-4 border rounded-lg bg-card">
-            <h3 className="font-bold">{project.name}</h3>
-            <p className="text-sm text-muted-foreground">{project.description}</p>
-            <div className="mt-4">
-              <div className='flex justify-between items-center mb-1'>
-                 <p className="text-sm">Progress</p>
-                 <p className="text-sm font-medium">{Math.round(project.progress)}%</p>
-              </div>
-              <Progress value={project.progress} className="h-2" />
-              <p className="text-sm mt-2 text-muted-foreground">{project.taskCount} tasks</p>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="grid gap-6 md:grid-cols-2">
+       <Card>
+        <CardHeader>
+          <CardTitle>Team Progress</CardTitle>
+          <CardDescription>Percentage of completed tasks per team.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={teamProgress}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis unit="%" />
+              <Tooltip />
+              <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Progress</CardTitle>
+          <CardDescription>Percentage of completed tasks per project.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={projectProgress}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis unit="%" />
+              <Tooltip />
+              <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-function MemberDashboard({ tasks, user }: { tasks: Task[], user: User }) {
+
+function MemberDashboard({ user }: { user: User }) {
+    const { tasks } = useTasks();
     const myTasks = tasks.filter(t => t.assigneeId === user.id);
     return (
         <div>
@@ -207,7 +249,6 @@ function FilteredTaskView({ tasks }: { tasks: Task[] }) {
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const { tasks } = useTasks();
 
   if (!user) return <p>Loading...</p>;
   
@@ -222,8 +263,8 @@ export default function DashboardPage() {
             </div>
         </div>
 
-        {user.role === 'admin' && <AdminDashboard tasks={tasks} />}
-        {user.role === 'member' && <MemberDashboard tasks={tasks} user={user} />}
+        {user.role === 'admin' && <AdminDashboard />}
+        {user.role === 'member' && <MemberDashboard user={user} />}
     </>
   );
 }

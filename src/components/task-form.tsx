@@ -1,4 +1,3 @@
-/*
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -278,21 +277,5 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
         </div>
       </form>
     </Form>
-  );
-}
-
-// Dummy export to prevent breaking other files
-export const TaskForm = () => null;
-
-*/
-// This file is commented out to prevent build errors.
-// The form functionality is currently disabled.
-export function TaskForm({ onClose }: { initialData?: any; onClose: () => void; }) {
-  // You can optionally render a placeholder or a message here
-  return (
-    <div className="p-4 text-center text-muted-foreground">
-      <p>The task form is temporarily disabled.</p>
-      <button onClick={onClose} className="mt-4 text-sm underline">Close</button>
-    </div>
   );
 }
