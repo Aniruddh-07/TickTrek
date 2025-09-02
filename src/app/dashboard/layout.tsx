@@ -37,8 +37,7 @@ import type { UserRole } from '@/lib/types';
 const navItemsBase = [
     { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard' },
     { href: '/dashboard/kanban', icon: ListTodo, label: 'Task Board' },
-    { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
-]
+];
 
 const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; label: string }[]> = {
   admin: [
@@ -48,6 +47,7 @@ const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; 
   ],
   member: [
     ...navItemsBase,
+    { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   ],
 };
 
