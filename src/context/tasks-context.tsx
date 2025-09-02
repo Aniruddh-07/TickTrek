@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -124,7 +125,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const newProject: Project = {
         id: `proj-${crypto.randomUUID()}`,
         ...project,
-        teamId: project.teamId || '',
+        teamIds: project.teamIds || [],
         description: project.description || '',
     };
     setProjects(prev => [newProject, ...prev]);
@@ -160,16 +161,20 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const deleteTeam = useCallback((teamId: string) => {
-      setTeams(prev => prev.filter(t => t.id !== teamId));
-      // You might want to unassign projects from this team
-      setProjects(prev => prev.map(p => p.teamId === teamId ? { ...p, teamId: '' } : p));
-      toast({ title: "Team Deleted", variant: "destructive", description: "The team has been deleted." });
-  }, [toast]);
+    setTeams(prev => prev.filter(t => t.id !== teamId));
+    // Also remove this team from any projects it was assigned to
+    setProjects(prevProjects => prevProjects.map(p => ({
+        ...p,
+        teamIds: p.teamIds.filter(id => id !== teamId),
+    })));
+    toast({ title: "Team Deleted", variant: "destructive", description: "The team has been deleted." });
+}, [toast]);
 
+  // This function is now less relevant with many-to-many, returning first lead found
   const getProjectTeamLead = useCallback((projectId: string) => {
     const project = projects.find(p => p.id === projectId);
-    if (!project || !project.teamId) return undefined;
-    const team = teams.find(t => t.id === project.teamId);
+    if (!project || !project.teamIds.length) return undefined;
+    const team = teams.find(t => t.id === project.teamIds[0]);
     if (!team) return undefined;
     return MOCK_USERS.find(u => u.id === team.leadId);
   }, [projects, teams]);

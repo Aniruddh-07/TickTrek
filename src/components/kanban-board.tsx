@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -47,7 +48,7 @@ function KanbanColumn({ status, tasks, onDrop, onTaskClick }: KanbanColumnProps)
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'flex-1 rounded-lg bg-card p-4 transition-colors',
+        'flex-1 rounded-lg bg-card p-4 transition-colors min-w-[300px]',
         isOver && 'bg-accent/20'
       )}
     >
@@ -79,8 +80,8 @@ export default function KanbanBoard({tasks}: {tasks: Task[]}) {
     if (!user) return false;
     const project = projects.find(p => p.id === task.projectId);
     if (!project) return false;
-    const team = teams.find(t => t.id === project.teamId);
-    return team?.leadId === user.id;
+    const projectTeams = teams.filter(t => project.teamIds.includes(t.id));
+    return projectTeams.some(t => t.leadId === user.id);
   }
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -119,7 +120,7 @@ export default function KanbanBoard({tasks}: {tasks: Task[]}) {
 
   return (
     <>
-      <div className="flex flex-col md:flex-row gap-6 w-full" onDragStart={handleTaskDragStart}>
+      <div className="flex gap-6 w-full overflow-x-auto pb-4" onDragStart={handleTaskDragStart}>
         {TASK_STATUSES.map((status) => (
           <KanbanColumn
             key={status}

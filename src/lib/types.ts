@@ -1,3 +1,4 @@
+
 export const TASK_STATUSES = ['pending', 'in-progress', 'completed'] as const;
 export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const;
 export const USER_ROLES = ['admin', 'member'] as const;
@@ -23,7 +24,7 @@ export interface Team {
 export interface Project {
   id: string;
   name: string;
-  teamId: string;
+  teamIds: string[];
   description: string;
 }
 
@@ -56,5 +57,5 @@ export interface Task {
 }
 
 export type NewTask = Omit<Task, 'id'>;
-export type NewProject = Omit<Project, 'id' | 'teamId'> & { teamId?: string };
+export type NewProject = Omit<Project, 'id'>;
 export type NewTeam = Omit<Team, 'id'>;

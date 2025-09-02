@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,7 +60,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
     
     const myLeadTeams = teams.filter(t => t.leadId === user.id);
     if(myLeadTeams.length > 0) {
-        const myProjectIds = projects.filter(p => myLeadTeams.some(t => t.id === p.teamId)).map(p => p.id);
+        const myProjectIds = projects.filter(p => myLeadTeams.some(t => p.teamIds.includes(t.id))).map(p => p.id);
         return projects.filter(p => myProjectIds.includes(p.id));
     }
     return [];
@@ -91,9 +92,12 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
     if (!selectedProjectId) return [];
     const project = projects.find(p => p.id === selectedProjectId);
     if (!project) return [];
-    const team = teams.find(t => t.id === project.teamId);
-    if (!team) return [];
-    return users.filter(u => team.memberIds.includes(u.id));
+    
+    const projectTeams = teams.filter(team => project.teamIds.includes(team.id));
+    const memberIds = new Set(projectTeams.flatMap(team => team.memberIds));
+
+    return users.filter(u => memberIds.has(u.id));
+
   }, [selectedProjectId, projects, teams, users]);
 
 
@@ -279,3 +283,5 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
     </Form>
   );
 }
+
+    

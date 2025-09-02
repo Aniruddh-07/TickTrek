@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,21 +14,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Project } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
+import { Checkbox } from './ui/checkbox';
 
 const projectFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().optional(),
-  teamId: z.string().min(1, 'Team is required.'),
+  teamIds: z.array(z.string()).refine((value) => value.length > 0, {
+    message: "You must select at least one team.",
+  }),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -44,12 +41,12 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
     ? {
         name: initialData.name,
         description: initialData.description,
-        teamId: initialData.teamId,
+        teamIds: initialData.teamIds,
       }
     : {
         name: '',
         description: '',
-        teamId: '',
+        teamIds: [],
       };
 
   const form = useForm<ProjectFormValues>({
@@ -103,24 +100,47 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
         
         <FormField
           control={form.control}
-          name="teamId"
-          render={({ field }) => (
+          name="teamIds"
+          render={() => (
             <FormItem>
-              <FormLabel>Assign Team</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a team" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mb-4">
+                <FormLabel className="text-base">Assign Teams</FormLabel>
+              </div>
+              <div className="space-y-2">
+                {teams.map((team) => (
+                  <FormField
+                    key={team.id}
+                    control={form.control}
+                    name="teamIds"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={team.id}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(team.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...field.value, team.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== team.id
+                                      )
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {team.name}
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}

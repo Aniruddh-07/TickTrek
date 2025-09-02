@@ -1,3 +1,4 @@
+
 'use client';
 
 import { z } from 'zod';
@@ -28,18 +29,18 @@ export function TicketForm({ task, onClose }: TicketFormProps) {
     const { user } = useUser();
     const { users, raiseTicket, teams, projects } = useTasks();
 
-    const teamLead = useMemo(() => {
+    const teamLeads = useMemo(() => {
         const project = projects.find(p => p.id === task.projectId);
-        if (!project) return null;
-        const team = teams.find(t => t.id === project.teamId);
-        if (!team) return null;
-        return users.find(u => u.id === team.leadId);
+        if (!project) return [];
+        const projectTeams = teams.filter(t => project.teamIds.includes(t.id));
+        const leadIds = projectTeams.map(t => t.leadId);
+        return users.filter(u => leadIds.includes(u.id));
     }, [task, projects, teams, users]);
     
     const form = useForm<TicketFormValues>({
         resolver: zodResolver(ticketFormSchema),
         defaultValues: {
-            assigneeId: teamLead?.id || '',
+            assigneeId: teamLeads[0]?.id || '',
             message: '',
         }
     });
@@ -55,22 +56,25 @@ export function TicketForm({ task, onClose }: TicketFormProps) {
     };
 
     const assignableUsers = useMemo(() => {
+        const adminUser = users.find(u => u.role === 'admin');
         const uniqueUsers = new Map<string, {id: string, name: string}>();
 
-        if (teamLead && teamLead.id !== user?.id) {
-            uniqueUsers.set(teamLead.id, teamLead);
-        }
+        teamLeads.forEach(lead => {
+            if (lead.id !== user?.id) {
+                uniqueUsers.set(lead.id, lead);
+            }
+        });
         
-        // This explicitly prevents admin from being assigned a ticket
-        // You can add other roles here if needed
-        const admin = users.find(u => u.role === 'admin');
-        if (admin && admin.id !== user?.id && admin.id === teamLead?.id) {
-            uniqueUsers.set(admin.id, admin);
+        // This explicitly prevents admin from being assigned a ticket unless they are a lead
+        if (adminUser && !uniqueUsers.has(adminUser.id)) {
+           // do not add admin
+        } else if (adminUser) {
+           // admin is a lead, so they are already in the list
         }
 
 
-        return Array.from(uniqueUsers.values()).filter(u => u.role !== 'admin');
-    }, [users, teamLead, user]);
+        return Array.from(uniqueUsers.values());
+    }, [users, teamLeads, user]);
 
     return (
         <Form {...form}>
@@ -84,15 +88,16 @@ export function TicketForm({ task, onClose }: TicketFormProps) {
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select a user" />
+                                    <SelectValue placeholder="Select a team lead" />
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                     {assignableUsers.map(u => (
                                         <SelectItem key={u.id} value={u.id}>
-                                            {u.name} {u.id === teamLead?.id ? '(Lead)' : ''}
+                                            {u.name} (Lead)
                                         </SelectItem>
                                     ))}
+                                    {assignableUsers.length === 0 && <SelectItem value="no-one" disabled>No available leads</SelectItem>}
                                 </SelectContent>
                             </Select>
                             <FormMessage />

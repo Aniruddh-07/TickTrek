@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -11,46 +12,61 @@ export default function KanbanPage() {
   const { tasks, projects, teams } = useTasks();
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
 
-  const { boardTitle, boardDescription, displayTasks } = useMemo(() => {
-    if (!user) return { boardTitle: 'Loading...', boardDescription: '', displayTasks: [] };
-    
-    // Admin sees all tasks
+  const { boardTitle, boardDescription, displayTasks, availableProjects } = useMemo(() => {
+    if (!user) return { boardTitle: 'Loading...', boardDescription: '', displayTasks: [], availableProjects: [] };
+
+    let userTeams = teams.filter(team => team.memberIds.includes(user.id));
+    let userLeadTeams = userTeams.filter(team => team.leadId === user.id);
+    let userIsLead = userLeadTeams.length > 0;
+
+    let relevantProjects = [];
+    let taskPool = [];
+    let title = 'Kanban Board';
+    let description = 'Your tasks organized by status.';
+
     if (user.role === 'admin') {
-      const filteredTasks = selectedProjectId === 'all'
-        ? tasks
-        : tasks.filter(t => t.projectId === selectedProjectId);
+      relevantProjects = projects;
+      taskPool = tasks;
+      title = 'Global Task Board';
+      description = 'Overview of all tasks across all projects.';
+    } else if (userIsLead) {
+      const leadTeamIds = userLeadTeams.map(t => t.id);
+      const leadProjectIds = projects.filter(p => p.teamIds.some(teamId => leadTeamIds.includes(teamId))).map(p => p.id);
       
-      return {
-        boardTitle: 'All Tasks Board',
-        boardDescription: 'Overview of all tasks across all projects.',
-        displayTasks: filteredTasks,
-      };
-    }
-    
-    const myTeams = teams.filter(team => team.memberIds.includes(user.id));
-    const isLead = myTeams.some(team => team.leadId === user.id);
+      const memberTeamIds = userTeams.filter(team => team.leadId !== user.id).map(t => t.id);
+      const memberProjectIds = projects.filter(p => p.teamIds.some(teamId => memberTeamIds.includes(teamId))).map(p => p.id);
+      
+      const allMyProjectIds = [...new Set([...leadProjectIds, ...memberProjectIds])];
+      relevantProjects = projects.filter(p => allMyProjectIds.includes(p.id));
 
-    // Team lead sees all tasks from their team's projects
-    if (isLead) {
-      const leadTeamIds = myTeams.filter(team => team.leadId === user.id).map(t => t.id);
-      const teamProjectIds = projects.filter(p => leadTeamIds.includes(p.teamId)).map(p => p.id);
-      const teamTasks = tasks.filter(t => teamProjectIds.includes(t.projectId));
-       return {
-            boardTitle: "My Team's Task Board",
-            boardDescription: "Tasks for the projects you are leading.",
-            displayTasks: teamTasks
-        };
+      const tasksFromLedProjects = tasks.filter(t => leadProjectIds.includes(t.projectId));
+      const tasksAssignedToMe = tasks.filter(t => t.assigneeId === user.id);
+      taskPool = [...new Map([...tasksFromLedProjects, ...tasksAssignedToMe].map(t => [t.id, t])).values()];
+      
+      title = "My Team's Tasks";
+      description = "All tasks from projects you lead, plus tasks assigned to you.";
+
+    } else { // Regular member
+      const memberTeamIds = userTeams.map(t => t.id);
+      const memberProjectIds = projects.filter(p => p.teamIds.some(teamId => memberTeamIds.includes(teamId))).map(p => p.id);
+      relevantProjects = projects.filter(p => memberProjectIds.includes(p.id));
+      taskPool = tasks.filter(t => t.assigneeId === user.id);
+      title = 'My Assigned Tasks';
+      description = 'All tasks that are directly assigned to you.';
     }
 
-    // Regular member sees only tasks assigned to them
-    const myAssignedTasks = tasks.filter(t => t.assigneeId === user.id);
-    return {
-        boardTitle: 'My Assigned Tasks',
-        boardDescription: 'All tasks that are directly assigned to you.',
-        displayTasks: myAssignedTasks,
+    const filteredTasks = selectedProjectId === 'all'
+      ? taskPool
+      : taskPool.filter(t => t.projectId === selectedProjectId);
+
+    return { 
+      boardTitle: title, 
+      boardDescription: description, 
+      displayTasks: filteredTasks, 
+      availableProjects: relevantProjects 
     };
 
-  }, [user, tasks, projects, teams, selectedProjectId]);
+  }, [user, tasks, projects, teams]);
 
 
   return (
@@ -60,23 +76,21 @@ export default function KanbanPage() {
           <h1 className="text-lg font-semibold md:text-2xl font-headline">{boardTitle}</h1>
           <p className="text-sm text-muted-foreground">{boardDescription}</p>
         </div>
-        {user?.role === 'admin' && (
-          <div className="w-full sm:w-64">
-            <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by project..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Projects</SelectItem>
-                {projects.map(project => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        <div className="w-full sm:w-64">
+          <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by project..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {availableProjects.map(project => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="w-full">
         <KanbanBoard tasks={displayTasks} />

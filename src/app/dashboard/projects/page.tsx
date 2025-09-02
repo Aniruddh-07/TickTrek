@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -53,16 +54,15 @@ export default function ProjectsPage() {
         if (user.role === 'admin') return projects;
         
         const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
-        return projects.filter(p => myTeamIds.includes(p.teamId));
+        return projects.filter(p => p.teamIds.some(teamId => myTeamIds.includes(teamId)));
     }, [user, projects, teams]);
 
     const projectsWithDetails = useMemo(() => {
         return visibleProjects.map(p => {
-            const team = teams.find(t => t.id === p.teamId);
-            const lead = users.find(u => team && u.id === team.leadId);
-            return {...p, teamName: team?.name || 'N/A', leadName: lead?.name || 'N/A'}
+            const projectTeams = teams.filter(t => p.teamIds.includes(t.id));
+            return {...p, teams: projectTeams }
         })
-    }, [visibleProjects, teams, users]);
+    }, [visibleProjects, teams]);
 
     return (
         <div>
@@ -72,7 +72,7 @@ export default function ProjectsPage() {
                     <p className="text-muted-foreground">
                         {user?.role === 'admin' 
                             ? "Create, edit, and assign projects to teams." 
-                            : "Projects your team is assigned to."
+                            : "Projects your teams are assigned to."
                         }
                     </p>
                 </div>
@@ -105,7 +105,7 @@ export default function ProjectsPage() {
                                             <AlertDialogHeader>
                                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the project.
+                                                This action cannot be undone. This will permanently delete the project and all associated tasks.
                                             </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
@@ -121,8 +121,11 @@ export default function ProjectsPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2 text-sm">
-                               <p><strong>Team:</strong> {project.teamName}</p>
-                               <p><strong>Team Lead:</strong> {project.leadName}</p>
+                               <p className='font-semibold'>Assigned Teams:</p>
+                               <ul className='list-disc pl-5'>
+                                {project.teams.map(team => <li key={team.id}>{team.name}</li>)}
+                                {project.teams.length === 0 && <li className='text-muted-foreground'>No teams assigned.</li>}
+                               </ul>
                             </div>
                         </CardContent>
                     </Card>

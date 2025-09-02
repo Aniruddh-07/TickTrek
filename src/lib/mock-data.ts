@@ -1,3 +1,4 @@
+
 import type { Task, User, Project, Team, Ticket } from './types';
 
 export const MOCK_USERS: User[] = [
@@ -14,8 +15,9 @@ export const MOCK_TEAMS: Team[] = [
 ];
 
 export const MOCK_PROJECTS: Project[] = [
-  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamId: 'team-1' },
-  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamId: 'team-2' },
+  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamIds: ['team-1'] },
+  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamIds: ['team-2'] },
+  { id: 'proj-3', name: 'Project Chimera', description: 'Cross-functional project for Q3 goals.', teamIds: ['team-1', 'team-2'] },
 ];
 
 export const MOCK_TASKS: Task[] = [
@@ -66,7 +68,7 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
     status: 'pending',
     priority: 'medium',
-    projectId: 'proj-1',
+    projectId: 'proj-3',
   },
   {
     id: 'task-6',
@@ -75,7 +77,7 @@ export const MOCK_TASKS: Task[] = [
     dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
     status: 'completed',
     priority: 'medium',
-    projectId: 'proj-1',
+    projectId: 'proj-3',
     assigneeId: 'user-3',
   },
   {
@@ -95,6 +97,17 @@ export const MOCK_TASKS: Task[] = [
     status: 'completed',
     priority: 'low',
     projectId: 'proj-1',
+    assigneeId: 'user-2',
+  },
+   {
+    id: 'task-9',
+    title: 'Set up CI/CD pipeline',
+    description: 'Configure continuous integration and deployment for the backend services.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 8)).toISOString().split('T')[0],
+    status: 'in-progress',
+    priority: 'high',
+    projectId: 'proj-3',
+    assigneeId: 'user-5',
   },
 ];
 
