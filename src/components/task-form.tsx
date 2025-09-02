@@ -139,6 +139,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                   placeholder="Add a more detailed description..."
                   className="resize-none"
                   {...field}
+                  value={field.value || ''}
                 />
               </FormControl>
               <FormMessage />
