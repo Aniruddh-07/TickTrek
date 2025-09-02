@@ -71,7 +71,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
     defaultValues: initialData
     ? {
         ...initialData,
-        dueDate: initialData.dueDate,
+        dueDate: new Date(initialData.dueDate).toISOString().split('T')[0],
         assigneeId: initialData.assigneeId || 'unassigned',
       }
     : {

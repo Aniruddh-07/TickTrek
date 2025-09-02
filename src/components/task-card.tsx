@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Calendar, EllipsisVertical, Trash2, FilePenLine, Circle, CheckCircle, Clock, User, Ticket } from 'lucide-react';
-import type { Task, TaskPriority, TaskStatus, User } from '@/lib/types';
+import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -64,16 +64,15 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
   
   const assignee = users.find(u => u.id === task.assigneeId);
 
-  const { canEditDelete, canRaiseTicket, isTeamLead } = useMemo(() => {
-    if (!user) return { canEditDelete: false, canRaiseTicket: false, isTeamLead: false };
+  const { canEditDelete, canRaiseTicket } = useMemo(() => {
+    if (!user) return { canEditDelete: false, canRaiseTicket: false };
     const project = projects.find(p => p.id === task.projectId);
     const team = teams.find(t => t.id === project?.teamId);
     const isLead = team?.leadId === user.id;
 
     return {
         canEditDelete: user.role === 'admin' || isLead,
-        canRaiseTicket: task.assigneeId === user.id,
-        isTeamLead: isLead,
+        canRaiseTicket: task.assigneeId === user.id || user.id === team?.leadId || user.role === 'admin',
     }
   }, [user, task, projects, teams]);
 
@@ -116,10 +115,13 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
                   </>
                 )}
                  {canRaiseTicket && (
+                  <>
+                  {canEditDelete && <DropdownMenuSeparator />}
                   <DropdownMenuItem onClick={() => setTicketSheetOpen(true)}>
                     <Ticket className="mr-2 h-4 w-4" />
                     <span>Raise Ticket</span>
                   </DropdownMenuItem>
+                  </>
                 )}
                 {!canEditDelete && !canRaiseTicket && <DropdownMenuItem disabled>No actions available</DropdownMenuItem>}
               </DropdownMenuContent>
@@ -174,103 +176,4 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
       </Sheet>
     </>
   );
-}
-
-// Create this new component file
-// src/components/ticket-form.tsx
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useTasks } from '@/context/tasks-context';
-import { useUser } from '@/context/user-context';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
-
-const ticketFormSchema = z.object({
-    assigneeId: z.string().min(1, "Please select a user to assign the ticket to."),
-    message: z.string().min(10, "Message must be at least 10 characters long."),
-});
-
-type TicketFormValues = z.infer<typeof ticketFormSchema>;
-
-interface TicketFormProps {
-    task: Task;
-    onClose: () => void;
-}
-
-export function TicketForm({ task, onClose }: TicketFormProps) {
-    const { user } = useUser();
-    const { users, raiseTicket } = useTasks();
-    
-    const form = useForm<TicketFormValues>({
-        resolver: zodResolver(ticketFormSchema),
-        defaultValues: {
-            assigneeId: '',
-            message: '',
-        }
-    });
-
-    const onSubmit = (data: TicketFormValues) => {
-        if (!user) return;
-        raiseTicket({
-            taskId: task.id,
-            raisedBy: user.id,
-            ...data
-        });
-        onClose();
-    };
-
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="assigneeId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Assign To</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a user" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {users.map(u => (
-                                        <SelectItem key={u.id} value={u.id} disabled={u.id === user?.id}>
-                                            {u.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                            <Textarea
-                                placeholder="Describe your issue or question..."
-                                className="resize-none"
-                                {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">Submit Ticket</Button>
-                </div>
-            </form>
-        </Form>
-    )
 }
