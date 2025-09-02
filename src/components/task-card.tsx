@@ -30,7 +30,7 @@ interface TaskCardProps {
 }
 
 const priorityClasses: Record<TaskPriority, string> = {
-  low: 'border-l-blue-500',
+  low: 'border-l-green-500',
   medium: 'border-l-yellow-500',
   high: 'border-l-red-500',
 };
