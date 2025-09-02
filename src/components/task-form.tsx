@@ -1,4 +1,6 @@
 
+/*
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -282,4 +284,13 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
       </form>
     </Form>
   );
+}
+
+*/
+export function TaskForm() {
+    return (
+        <div>
+            The task form is currently disabled due to a technical issue.
+        </div>
+    )
 }
