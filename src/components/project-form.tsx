@@ -23,6 +23,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { Project } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
+import { useMemo } from 'react';
 
 const projectFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -40,8 +41,7 @@ interface ProjectFormProps {
 
 export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
   const { addProject, updateProject, teams, users } = useTasks();
-  const teamLeads = users.filter(u => u.role === 'team-lead');
-
+  
   const defaultValues: Partial<ProjectFormValues> = initialData
     ? {
         ...initialData,
@@ -57,6 +57,15 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
     resolver: zodResolver(projectFormSchema),
     defaultValues,
   });
+
+  const selectedTeamId = form.watch('teamId');
+
+  const teamMembers = useMemo(() => {
+    if (!selectedTeamId) return [];
+    const selectedTeam = teams.find(t => t.id === selectedTeamId);
+    return selectedTeam ? selectedTeam.members : [];
+  }, [selectedTeamId, teams]);
+
 
   function onSubmit(data: ProjectFormValues) {
     if (initialData) {
@@ -108,7 +117,10 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign Team</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                field.onChange(value);
+                form.setValue('leadId', ''); // Reset lead when team changes
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a team" />
@@ -133,16 +145,16 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign Team Lead</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={!selectedTeamId}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a Team Lead" />
+                    <SelectValue placeholder={!selectedTeamId ? "First select a team" : "Select a Team Lead"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {teamLeads.map((lead) => (
-                    <SelectItem key={lead.id} value={lead.id}>
-                      {lead.name}
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
