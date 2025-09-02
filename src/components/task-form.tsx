@@ -89,10 +89,14 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
   });
 
   function onSubmit(data: TaskFormValues) {
+    const submissionData = {
+      ...data,
+      assigneeId: data.assigneeId === 'unassigned' ? undefined : data.assigneeId,
+    };
     if (initialData) {
-      updateTask(initialData.id, data);
+      updateTask(initialData.id, submissionData);
     } else {
-      addTask(data);
+      addTask(submissionData);
     }
     onClose();
   }
@@ -230,14 +234,14 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Assign To</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || 'unassigned'}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Assign to a member" />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Unassigned</SelectItem>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
                           {availableUsers.map((user) => (
                               <SelectItem key={user.id} value={user.id}>
                                   {user.name}
