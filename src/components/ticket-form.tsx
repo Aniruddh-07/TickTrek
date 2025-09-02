@@ -55,17 +55,21 @@ export function TicketForm({ task, onClose }: TicketFormProps) {
     };
 
     const assignableUsers = useMemo(() => {
-        const admin = users.find(u => u.role === 'admin');
         const uniqueUsers = new Map<string, {id: string, name: string}>();
 
         if (teamLead && teamLead.id !== user?.id) {
             uniqueUsers.set(teamLead.id, teamLead);
         }
-        if (admin && admin.id !== user?.id) {
+        
+        // This explicitly prevents admin from being assigned a ticket
+        // You can add other roles here if needed
+        const admin = users.find(u => u.role === 'admin');
+        if (admin && admin.id !== user?.id && admin.id === teamLead?.id) {
             uniqueUsers.set(admin.id, admin);
         }
 
-        return Array.from(uniqueUsers.values());
+
+        return Array.from(uniqueUsers.values()).filter(u => u.role !== 'admin');
     }, [users, teamLead, user]);
 
     return (
