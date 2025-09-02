@@ -58,7 +58,6 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
     if (!user) return [];
     if (user.role === 'admin') return projects;
     
-    // For team leads, only show projects they lead
     const myLeadTeams = teams.filter(t => t.leadId === user.id);
     if(myLeadTeams.length > 0) {
         const myProjectIds = projects.filter(p => myLeadTeams.some(t => t.id === p.teamId)).map(p => p.id);
