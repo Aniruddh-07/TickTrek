@@ -19,8 +19,8 @@ export default function KanbanPage() {
     let userLeadTeams = userTeams.filter(team => team.leadId === user.id);
     let userIsLead = userLeadTeams.length > 0;
 
-    let relevantProjects = [];
-    let taskPool = [];
+    let relevantProjects: typeof projects = [];
+    let taskPool: typeof tasks = [];
     let title = 'Kanban Board';
     let description = 'Your tasks organized by status.';
 
@@ -66,11 +66,11 @@ export default function KanbanPage() {
       availableProjects: relevantProjects 
     };
 
-  }, [user, tasks, projects, teams]);
+  }, [user, tasks, projects, teams, selectedProjectId]);
 
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h1 className="text-lg font-semibold md:text-2xl font-headline">{boardTitle}</h1>
@@ -92,9 +92,9 @@ export default function KanbanPage() {
           </Select>
         </div>
       </div>
-      <div className="w-full">
+      <div className="flex-1 overflow-x-auto">
         <KanbanBoard tasks={displayTasks} />
       </div>
-    </>
+    </div>
   );
 }
