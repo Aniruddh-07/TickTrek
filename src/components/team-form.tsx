@@ -16,12 +16,15 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Team } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { useMemo } from 'react';
 
 const teamFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   memberIds: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one member.",
   }),
+  leadId: z.string().min(1, 'A team lead is required.'),
 });
 
 type TeamFormValues = z.infer<typeof teamFormSchema>;
@@ -33,22 +36,30 @@ interface TeamFormProps {
 
 export function TeamForm({ initialData, onClose }: TeamFormProps) {
   const { addTeam, updateTeam, users } = useTasks();
-  const members = users.filter(u => u.role === 'member');
+  const allMembers = users.filter(u => u.role === 'member');
 
   const defaultValues: Partial<TeamFormValues> = initialData
     ? {
         name: initialData.name,
-        memberIds: initialData.members.map(m => m.id),
+        memberIds: initialData.memberIds,
+        leadId: initialData.leadId,
       }
     : {
         name: '',
         memberIds: [],
+        leadId: '',
       };
 
   const form = useForm<TeamFormValues>({
     resolver: zodResolver(teamFormSchema),
     defaultValues,
   });
+
+  const selectedMemberIds = form.watch('memberIds');
+
+  const availableLeads = useMemo(() => {
+    return allMembers.filter(m => selectedMemberIds.includes(m.id));
+  }, [selectedMemberIds, allMembers]);
 
   function onSubmit(data: TeamFormValues) {
     if (initialData) {
@@ -83,8 +94,8 @@ export function TeamForm({ initialData, onClose }: TeamFormProps) {
                 <div className="mb-4">
                     <FormLabel className="text-base">Members</FormLabel>
                 </div>
-                <div className="space-y-2">
-                {members.map((member) => (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                {allMembers.map((member) => (
                     <FormField
                     key={member.id}
                     control={form.control}
@@ -99,13 +110,15 @@ export function TeamForm({ initialData, onClose }: TeamFormProps) {
                             <Checkbox
                                 checked={field.value?.includes(member.id)}
                                 onCheckedChange={(checked) => {
-                                return checked
-                                    ? field.onChange([...(field.value || []), member.id])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                        (value) => value !== member.id
-                                        )
-                                    )
+                                  const newMemberIds = checked
+                                      ? [...(field.value || []), member.id]
+                                      : field.value?.filter((value) => value !== member.id);
+                                  field.onChange(newMemberIds);
+
+                                  // if the current lead is removed from members, reset leadId
+                                  if (!newMemberIds?.includes(form.getValues('leadId'))) {
+                                    form.setValue('leadId', '');
+                                  }
                                 }}
                             />
                             </FormControl>
@@ -121,6 +134,31 @@ export function TeamForm({ initialData, onClose }: TeamFormProps) {
                 <FormMessage />
                 </FormItem>
             )}
+        />
+
+        <FormField
+          control={form.control}
+          name="leadId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Team Lead</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value} disabled={availableLeads.length === 0}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={availableLeads.length === 0 ? "Select members first" : "Select a team lead"} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableLeads.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         <div className="flex justify-end gap-2">

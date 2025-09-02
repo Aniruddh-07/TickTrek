@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
+import type { Task, TaskPriority, TaskStatus, User } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/select';
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/types';
 import { useUser } from '@/context/user-context';
-import { MOCK_PROJECTS, MOCK_TEAMS } from '@/lib/mock-data';
 import { Progress } from '@/components/ui/progress';
 
 function AdminDashboard({ tasks }: { tasks: Task[] }) {
@@ -62,22 +61,7 @@ function AdminDashboard({ tasks }: { tasks: Task[] }) {
   );
 }
 
-function TeamLeadDashboard({ tasks, user }: { tasks: Task[], user: any }) {
-    const { projects } = useTasks();
-    const managedProjects = projects.filter(p => p.leadId === user.id);
-    const projectIds = managedProjects.map(p => p.id);
-    const teamTasks = tasks.filter(t => projectIds.includes(t.projectId));
-
-    return (
-        <div>
-            <h2 className="text-2xl font-bold mb-4 font-headline">My Team's Tasks</h2>
-            <p className="mb-4 text-muted-foreground">You are leading {managedProjects.length} project(s).</p>
-            <FilteredTaskView tasks={teamTasks} />
-        </div>
-    );
-}
-
-function MemberDashboard({ tasks, user }: { tasks: Task[], user: any }) {
+function MemberDashboard({ tasks, user }: { tasks: Task[], user: User }) {
     const myTasks = tasks.filter(t => t.assigneeId === user.id);
     return (
         <div>
@@ -87,7 +71,6 @@ function MemberDashboard({ tasks, user }: { tasks: Task[], user: any }) {
     );
 }
 
-
 function FilteredTaskView({ tasks }: { tasks: Task[] }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
@@ -96,7 +79,14 @@ function FilteredTaskView({ tasks }: { tasks: Task[] }) {
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
 
   const { user } = useUser();
-  const canAddTask = user?.role === 'admin' || user?.role === 'team-lead';
+  const { teams } = useTasks();
+
+  const isTeamLead = useMemo(() => {
+    if (!user) return false;
+    return teams.some(team => team.leadId === user.id);
+  }, [user, teams]);
+
+  const canAddTask = user?.role === 'admin' || isTeamLead;
 
 
   const handleAddTaskClick = () => {
@@ -233,7 +223,6 @@ export default function DashboardPage() {
         </div>
 
         {user.role === 'admin' && <AdminDashboard tasks={tasks} />}
-        {user.role === 'team-lead' && <TeamLeadDashboard tasks={tasks} user={user} />}
         {user.role === 'member' && <MemberDashboard tasks={tasks} user={user} />}
     </>
   );

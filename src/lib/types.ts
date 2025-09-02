@@ -1,6 +1,6 @@
 export const TASK_STATUSES = ['pending', 'in-progress', 'completed'] as const;
 export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const;
-export const USER_ROLES = ['admin', 'team-lead', 'member'] as const;
+export const USER_ROLES = ['admin', 'member'] as const;
 
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
@@ -15,15 +15,15 @@ export interface User {
 
 export interface Team {
   id: string;
-  name: string;
-  members: User[];
+  name:string;
+  leadId: string;
+  memberIds: string[];
 }
 
 export interface Project {
   id: string;
   name: string;
   teamId: string;
-  leadId: string;
   description: string;
 }
 
@@ -38,6 +38,7 @@ export interface Ticket {
   id: string;
   taskId: string;
   raisedBy: string; // userId
+  assigneeId: string; // userId
   message: string;
   status: 'open' | 'closed';
   replies: TicketReply[];
@@ -55,5 +56,5 @@ export interface Task {
 }
 
 export type NewTask = Omit<Task, 'id'>;
-export type NewProject = Omit<Project, 'id'>;
-export type NewTeam = { name: string; memberIds: string[] };
+export type NewProject = Omit<Project, 'id' | 'teamId'> & { teamId?: string };
+export type NewTeam = Omit<Team, 'id'>;

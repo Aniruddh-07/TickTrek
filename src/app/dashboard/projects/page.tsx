@@ -55,7 +55,7 @@ export default function ProjectsPage() {
     const projectsWithDetails = useMemo(() => {
         return projects.map(p => {
             const team = teams.find(t => t.id === p.teamId);
-            const lead = users.find(u => u.id === p.leadId);
+            const lead = users.find(u => team && u.id === team.leadId);
             return {...p, teamName: team?.name || 'N/A', leadName: lead?.name || 'N/A'}
         })
     }, [projects, teams, users]);

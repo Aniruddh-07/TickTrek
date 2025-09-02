@@ -1,40 +1,49 @@
 'use client';
 
+import { useMemo } from 'react';
 import KanbanBoard from '@/components/kanban-board';
 import { useUser } from '@/context/user-context';
 import { useTasks } from '@/context/tasks-context';
-import { MOCK_PROJECTS } from '@/lib/mock-data';
 
 export default function KanbanPage() {
   const { user } = useUser();
-  const { tasks } = useTasks();
+  const { tasks, projects, teams } = useTasks();
 
-  if (!user) return <p>Loading...</p>
-
-  let boardTitle = "Kanban Board";
-  let boardDescription = "Drag and drop tasks to change their status.";
-  let displayTasks = tasks;
-
-  if (user.role === 'team-lead') {
-    const managedProjects = MOCK_PROJECTS.filter(p => p.leadId === user.id);
-    const projectIds = managedProjects.map(p => p.id);
-    displayTasks = tasks.filter(t => projectIds.includes(t.projectId));
-    boardTitle = "My Team's Project Board";
-    boardDescription = "Manage tasks for your projects."
-  } else if (user.role === 'member') {
-    const team = MOCK_PROJECTS.find(p => p.teamId && tasks.some(t => t.projectId === p.id && t.assigneeId === user.id));
-    if (team) {
-       const teamProjectIds = MOCK_PROJECTS.filter(p => p.teamId === team.teamId).map(p => p.id);
-       displayTasks = tasks.filter(t => teamProjectIds.includes(t.projectId));
-    } else {
-        displayTasks = [];
+  const {boardTitle, boardDescription, displayTasks} = useMemo(() => {
+    if (!user) return { boardTitle: "Loading...", boardDescription: "", displayTasks: [] };
+    
+    if (user.role === 'admin') {
+      return {
+        boardTitle: "All Tasks Board",
+        boardDescription: "Overview of all tasks across all projects.",
+        displayTasks: tasks,
+      };
     }
-    boardTitle = "Team Task Board";
-    boardDescription = "Here are all the tasks for your team's projects.";
-  } else if (user.role === 'admin') {
-     boardTitle = "All Tasks Board";
-     boardDescription = "Overview of all tasks across all projects.";
-  }
+    
+    // For members
+    const myLeadTeams = teams.filter(team => team.leadId === user.id);
+    const myMemberTeams = teams.filter(team => team.memberIds.includes(user.id));
+    
+    if (myLeadTeams.length > 0) { // User is a team lead
+        const leadProjectIds = projects.filter(p => myLeadTeams.some(t => t.id === p.teamId)).map(p => p.id);
+        const teamTasks = tasks.filter(t => leadProjectIds.includes(t.projectId));
+        return {
+            boardTitle: "My Team's Task Board",
+            boardDescription: "Tasks for the projects you are leading.",
+            displayTasks: teamTasks
+        };
+    }
+
+    // Regular member view
+    const memberProjectIds = projects.filter(p => myMemberTeams.some(t => t.id === p.teamId)).map(p => p.id);
+    const memberTasks = tasks.filter(t => memberProjectIds.includes(t.projectId));
+     return {
+        boardTitle: "My Task Board",
+        boardDescription: "All tasks for your projects.",
+        displayTasks: memberTasks
+    };
+
+  }, [user, tasks, projects, teams]);
 
 
   return (

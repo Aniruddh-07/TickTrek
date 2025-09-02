@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Edit, Trash2, UserPlus, MoreVertical } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import { useTasks } from '@/context/tasks-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamForm } from '@/components/team-form';
-import type { Team, User, UserRole } from '@/lib/types';
+import type { Team } from '@/lib/types';
 import {
   Sheet,
   SheetContent,
@@ -27,12 +27,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu';
-
 
 export default function TeamsPage() {
-    const { user, setUserRole } = useUser();
-    const { teams, deleteTeam } = useTasks();
+    const { user } = useUser();
+    const { teams, users, deleteTeam } = useTasks();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<Team | undefined>(undefined);
 
@@ -50,11 +48,18 @@ export default function TeamsPage() {
         setIsSheetOpen(false);
         setEditingTeam(undefined);
     };
-
-    const handleRoleChange = (userId: string, role: UserRole) => {
-        setUserRole(userId, role);
-    };
-
+    
+    const teamsWithMembers = useMemo(() => {
+      return teams.map(team => {
+        const members = users.filter(u => team.memberIds.includes(u.id));
+        const lead = users.find(u => u.id === team.leadId);
+        return {
+          ...team,
+          members,
+          lead,
+        }
+      })
+    }, [teams, users]);
 
     if (user?.role !== 'admin') {
         return <p>You do not have permission to view this page.</p>;
@@ -74,7 +79,7 @@ export default function TeamsPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {teams.map(team => (
+                {teamsWithMembers.map(team => (
                     <Card key={team.id}>
                         <CardHeader>
                             <CardTitle className="flex justify-between items-center">
@@ -102,34 +107,19 @@ export default function TeamsPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <h4 className="font-semibold mb-2">Members</h4>
+                            <h4 className="font-semibold mb-2">Members ({team.members.length})</h4>
                             <div className="flex flex-wrap gap-2">
-                                {team.members.map(member => (
+                                {team.members
+                                  .sort((a,b) => a.id === team.leadId ? -1 : b.id === team.leadId ? 1 : 0)
+                                  .map(member => (
                                      <div key={member.id} className="flex items-center gap-2 bg-muted p-2 rounded-md text-sm">
                                          <Avatar className="h-6 w-6">
                                             <AvatarImage src={member.avatar} />
                                             <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                          <span>{member.name}</span>
-                                          <span className="text-xs text-muted-foreground capitalize">{member.role.replace('-', ' ')}</span>
+                                          <span>{member.name}{member.id === team.leadId && ' (Lead)'}</span>
                                         </div>
-                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" disabled={member.id === user.id}>
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                 <DropdownMenuRadioGroup 
-                                                    value={member.role} 
-                                                    onValueChange={(value) => handleRoleChange(member.id, value as UserRole)}
-                                                  >
-                                                    <DropdownMenuRadioItem value="member">Member</DropdownMenuRadioItem>
-                                                    <DropdownMenuRadioItem value="team-lead">Team Lead</DropdownMenuRadioItem>
-                                                </DropdownMenuRadioGroup>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
                                     </div>
                                 ))}
                             </div>

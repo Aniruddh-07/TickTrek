@@ -23,13 +23,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { Project } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
-import { useMemo } from 'react';
 
 const projectFormSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   description: z.string().optional(),
   teamId: z.string().min(1, 'Team is required.'),
-  leadId: z.string().min(1, 'Team Lead is required.'),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -40,32 +38,24 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
-  const { addProject, updateProject, teams, users } = useTasks();
+  const { addProject, updateProject, teams } = useTasks();
   
   const defaultValues: Partial<ProjectFormValues> = initialData
     ? {
-        ...initialData,
+        name: initialData.name,
+        description: initialData.description,
+        teamId: initialData.teamId,
       }
     : {
         name: '',
         description: '',
         teamId: '',
-        leadId: '',
       };
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
     defaultValues,
   });
-
-  const selectedTeamId = form.watch('teamId');
-
-  const teamMembers = useMemo(() => {
-    if (!selectedTeamId) return [];
-    const selectedTeam = teams.find(t => t.id === selectedTeamId);
-    return selectedTeam ? selectedTeam.members : [];
-  }, [selectedTeamId, teams]);
-
 
   function onSubmit(data: ProjectFormValues) {
     if (initialData) {
@@ -117,10 +107,7 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign Team</FormLabel>
-              <Select onValueChange={(value) => {
-                field.onChange(value);
-                form.setValue('leadId', ''); // Reset lead when team changes
-              }} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a team" />
@@ -130,31 +117,6 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
                   {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="leadId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Assign Team Lead</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={!selectedTeamId}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={!selectedTeamId ? "First select a team" : "Select a Team Lead"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {teamMembers.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

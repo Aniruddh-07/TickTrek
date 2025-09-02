@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTasks } from '@/context/tasks-context';
 import { TASK_STATUSES, type Task, type TaskStatus } from '@/lib/types';
 import TaskCard from './task-card';
@@ -69,11 +69,19 @@ function KanbanColumn({ status, tasks, onDrop, onTaskClick }: KanbanColumnProps)
 }
 
 export default function KanbanBoard({tasks}: {tasks: Task[]}) {
-  const { updateTask } = useTasks();
+  const { updateTask, teams, projects } = useTasks();
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { user } = useUser();
+
+  const isTeamLeadForTask = (task: Task) => {
+    if (!user) return false;
+    const project = projects.find(p => p.id === task.projectId);
+    if (!project) return false;
+    const team = teams.find(t => t.id === project.teamId);
+    return team?.leadId === user.id;
+  }
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     setDraggedTaskId(taskId);
@@ -98,8 +106,7 @@ export default function KanbanBoard({tasks}: {tasks: Task[]}) {
   };
 
   const handleEditTask = (task: Task) => {
-    // only allow editing for team leads and admins
-    if (user?.role === 'admin' || user?.role === 'team-lead') {
+    if (user?.role === 'admin' || isTeamLeadForTask(task)) {
       setEditingTask(task);
       setIsSheetOpen(true);
     }

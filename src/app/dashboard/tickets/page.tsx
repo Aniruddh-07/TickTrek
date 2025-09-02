@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
+import { useMemo } from 'react';
 
 export default function TicketsPage() {
   const { user } = useUser();
@@ -16,18 +17,11 @@ export default function TicketsPage() {
 
   if (!user) return <p>Loading...</p>;
 
-  const relevantTickets = tickets.filter(ticket => {
-      if (user.role === 'member') {
-          return ticket.raisedBy === user.id;
-      }
-      if (user.role === 'team-lead') {
-          const task = MOCK_TASKS.find(t => t.id === ticket.taskId);
-          // This is a simplification. In a real app, you'd check project leadership.
-          const member = MOCK_USERS.find(u => u.id === ticket.raisedBy);
-          return member; // Show if the ticket is from any member
-      }
-      return false; // Admins don't manage tickets directly in this design
-  });
+  const relevantTickets = useMemo(() => {
+    return tickets.filter(ticket => 
+        ticket.raisedBy === user.id || ticket.assigneeId === user.id
+    );
+  }, [tickets, user.id]);
 
   const handleReplySubmit = (ticketId: string, e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,7 +39,7 @@ export default function TicketsPage() {
         <div>
           <h1 className="text-2xl font-bold font-headline">Tickets</h1>
           <p className="text-muted-foreground">
-            {user.role === 'member' ? 'Your raised tickets.' : 'Tickets from your team members.'}
+            Your raised and assigned tickets.
           </p>
         </div>
       </div>
@@ -59,6 +53,9 @@ export default function TicketsPage() {
             {relevantTickets.map(ticket => {
                 const task = MOCK_TASKS.find(t => t.id === ticket.taskId);
                 const raisedBy = MOCK_USERS.find(u => u.id === ticket.raisedBy);
+                const assignedTo = MOCK_USERS.find(u => u.id === ticket.assigneeId);
+
+                const canReply = ticket.assigneeId === user.id && ticket.status === 'open';
 
                 return (
                     <Card key={ticket.id}>
@@ -70,7 +67,7 @@ export default function TicketsPage() {
                                 </Badge>
                             </CardTitle>
                             <CardDescription>
-                                Raised by {raisedBy?.name || 'Unknown User'}
+                                Raised by: {raisedBy?.name || 'Unknown'} | Assigned to: {assignedTo?.name || 'Unknown'}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -99,7 +96,7 @@ export default function TicketsPage() {
                                 })}
                             </div>
 
-                            {user.role === 'team-lead' && ticket.status === 'open' && (
+                            {canReply && (
                                 <form className="mt-4 space-y-2" onSubmit={(e) => handleReplySubmit(ticket.id, e)}>
                                     <Textarea name="reply" placeholder="Type your reply..." required />
                                     <div className="flex justify-end gap-2">

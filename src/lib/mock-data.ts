@@ -2,20 +2,20 @@ import type { Task, User, Project, Team, Ticket } from './types';
 
 export const MOCK_USERS: User[] = [
   { id: 'user-1', name: 'Admin User', role: 'admin', avatar: 'https://picsum.photos/seed/admin/50' },
-  { id: 'user-2', name: 'Team Lead Tina', role: 'team-lead', avatar: 'https://picsum.photos/seed/tina/50' },
-  { id: 'user-3', name: 'Member Mike', role: 'member', avatar: 'https://picsum.photos/seed/mike/50' },
-  { id: 'user-4', name: 'Member Mary', role: 'member', avatar: 'https://picsum.photos/seed/mary/50' },
-  { id: 'user-5', name: 'Lead Larry', role: 'team-lead', avatar: 'https://picsum.photos/seed/larry/50' },
+  { id: 'user-2', name: 'Tina Member', role: 'member', avatar: 'https://picsum.photos/seed/tina/50' },
+  { id: 'user-3', name: 'Mike Member', role: 'member', avatar: 'https://picsum.photos/seed/mike/50' },
+  { id: 'user-4', name: 'Mary Member', role: 'member', avatar: 'https://picsum.photos/seed/mary/50' },
+  { id: 'user-5', name: 'Larry Member', role: 'member', avatar: 'https://picsum.photos/seed/larry/50' },
 ];
 
 export const MOCK_TEAMS: Team[] = [
-    { id: 'team-1', name: 'Frontend Wizards', members: [MOCK_USERS[1], MOCK_USERS[2]] },
-    { id: 'team-2', name: 'Backend Brigade', members: [MOCK_USERS[4], MOCK_USERS[3]] },
+    { id: 'team-1', name: 'Frontend Wizards', leadId: 'user-2', memberIds: ['user-2', 'user-3'] },
+    { id: 'team-2', name: 'Backend Brigade', leadId: 'user-5', memberIds: ['user-4', 'user-5'] },
 ];
 
 export const MOCK_PROJECTS: Project[] = [
-  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamId: 'team-1', leadId: 'user-2' },
-  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamId: 'team-2', leadId: 'user-5' },
+  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamId: 'team-1' },
+  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamId: 'team-2' },
 ];
 
 export const MOCK_TASKS: Task[] = [
@@ -99,8 +99,8 @@ export const MOCK_TASKS: Task[] = [
 ];
 
 export const MOCK_TICKETS: Ticket[] = [
-    { id: 'ticket-1', taskId: 'task-1', raisedBy: 'user-3', message: 'I need access to the Figma files.', status: 'open', replies: []},
-    { id: 'ticket-2', taskId: 'task-2', raisedBy: 'user-4', message: 'Which hashing algorithm should I use?', status: 'open', replies: [
+    { id: 'ticket-1', taskId: 'task-1', raisedBy: 'user-3', assigneeId: 'user-2', message: 'I need access to the Figma files.', status: 'open', replies: []},
+    { id: 'ticket-2', taskId: 'task-2', raisedBy: 'user-4', assigneeId: 'user-5', message: 'Which hashing algorithm should I use?', status: 'open', replies: [
       { id: 'reply-1', authorId: 'user-5', message: 'Please use bcrypt for hashing.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() }
     ]},
 ];

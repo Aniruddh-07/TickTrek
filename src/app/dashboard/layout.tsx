@@ -28,27 +28,25 @@ import {
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Logo from '@/components/logo';
-import { TasksProvider } from '@/context/tasks-context';
+import { TasksProvider, useTasks } from '@/context/tasks-context';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { UserProvider, useUser } from '@/context/user-context';
 import type { UserRole } from '@/lib/types';
 
+const navItemsBase = [
+    { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard' },
+    { href: '/dashboard/kanban', icon: ListTodo, label: 'Task Board' },
+    { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
+]
+
 const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; label: string }[]> = {
   admin: [
-    { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard' },
+    ...navItemsBase,
     { href: '/dashboard/projects', icon: FolderKanban, label: 'Projects' },
     { href: '/dashboard/teams', icon: Users, label: 'Teams' },
-    { href: '/dashboard/kanban', icon: ListTodo, label: 'All Tasks' },
-  ],
-  'team-lead': [
-    { href: '/dashboard', icon: LayoutGrid, label: 'My Dashboard' },
-    { href: '/dashboard/kanban', icon: ListTodo, label: 'Project Board' },
-    { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   ],
   member: [
-    { href: '/dashboard', icon: LayoutGrid, label: 'My Tasks' },
-    { href: '/dashboard/kanban', icon: ListTodo, label: 'Team Board' },
-    { href: '/dashboard/tickets', icon: Ticket, label: 'My Tickets' },
+    ...navItemsBase,
   ],
 };
 
@@ -56,9 +54,15 @@ const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, users, setUser } = useUser();
+  const { teams } = useTasks();
+
+  const isTeamLead = useMemo(() => {
+    if (!user) return false;
+    return teams.some(team => team.leadId === user.id);
+  }, [user, teams]);
 
   const navItems = user ? navItemsByRole[user.role] : [];
-
+  
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -66,6 +70,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
+  const roleDisplay = user.role === 'admin' ? 'Admin' : (isTeamLead ? 'Team Lead' : 'Member');
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -152,7 +158,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account ({user.role})</DropdownMenuLabel>
+              <DropdownMenuLabel>My Account ({roleDisplay})</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Switch User</DropdownMenuLabel>
                <DropdownMenuRadioGroup value={user.id} onValueChange={(id) => setUser(users.find(u => u.id === id)!)}>

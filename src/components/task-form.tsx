@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,11 +25,8 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
   type Task,
-  type TaskPriority,
-  type TaskStatus,
 } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
-import { MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS } from '@/lib/mock-data';
 import { useUser } from '@/context/user-context';
 import { useMemo } from 'react';
 
@@ -54,24 +50,29 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ initialData, onClose }: TaskFormProps) {
-  const { addTask, updateTask } = useTasks();
+  const { addTask, updateTask, projects, teams, users } = useTasks();
   const { user } = useUser();
   
   const availableProjects = useMemo(() => {
-    if (user?.role === 'admin') return MOCK_PROJECTS;
-    if (user?.role === 'team-lead') return MOCK_PROJECTS.filter(p => p.leadId === user.id);
+    if (!user) return [];
+    if (user.role === 'admin') return projects;
+    
+    // For team leads, only show projects they lead
+    const myLeadTeams = teams.filter(t => t.leadId === user.id);
+    if(myLeadTeams.length > 0) {
+        const myProjectIds = projects.filter(p => myLeadTeams.some(t => t.id === p.teamId)).map(p => p.id);
+        return projects.filter(p => myProjectIds.includes(p.id));
+    }
     return [];
-  }, [user]);
+  }, [user, projects, teams]);
 
-  const availableUsers = useMemo(() => {
-    // In a real app, you'd fetch users based on the selected project's team
-    return MOCK_USERS.filter(u => u.role === 'member');
-  }, []);
-
-  const defaultValues: Partial<TaskFormValues> = initialData
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskFormSchema),
+    defaultValues: initialData
     ? {
         ...initialData,
         dueDate: initialData.dueDate,
+        assigneeId: initialData.assigneeId || 'unassigned',
       }
     : {
         title: '',
@@ -80,13 +81,21 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
         priority: 'medium',
         dueDate: new Date().toISOString().split('T')[0],
         projectId: availableProjects[0]?.id || '',
-        assigneeId: '',
-      };
-
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskFormSchema),
-    defaultValues,
+        assigneeId: 'unassigned',
+      },
   });
+
+  const selectedProjectId = form.watch('projectId');
+
+  const availableUsers = useMemo(() => {
+    if (!selectedProjectId) return [];
+    const project = projects.find(p => p.id === selectedProjectId);
+    if (!project) return [];
+    const team = teams.find(t => t.id === project.teamId);
+    if (!team) return [];
+    return users.filter(u => team.memberIds.includes(u.id));
+  }, [selectedProjectId, projects, teams, users]);
+
 
   function onSubmit(data: TaskFormValues) {
     const submissionData = {
@@ -142,7 +151,10 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Project</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                  field.onChange(value);
+                  form.setValue('assigneeId', 'unassigned');
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a project" />
@@ -214,7 +226,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
+                    </Trigger>
                     </FormControl>
                     <SelectContent>
                     {TASK_PRIORITIES.map((priority) => (
@@ -234,10 +246,15 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Assign To</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value || 'unassigned'}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      defaultValue={field.value}
+                      disabled={!selectedProjectId}
+                    >
                         <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Assign to a member" />
+                            <SelectValue placeholder={!selectedProjectId ? "First select a project" : "Assign to a member"} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>

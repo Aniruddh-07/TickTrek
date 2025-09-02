@@ -23,8 +23,9 @@ interface TasksContextType {
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   deleteProject: (projectId: string) => void;
   addTeam: (team: NewTeam) => void;
-  updateTeam: (teamId: string, updates: { name: string; memberIds: string[] }) => void;
+  updateTeam: (teamId: string, updates: NewTeam) => void;
   deleteTeam: (teamId: string) => void;
+  getProjectTeamLead: (projectId: string) => User | undefined;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -95,7 +96,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     setTickets(prev => [newTicket, ...prev]);
     toast({
       title: 'Ticket Raised',
-      description: 'Your ticket has been submitted to the team lead.',
+      description: 'Your ticket has been submitted.',
     });
   }, [toast]);
 
@@ -123,6 +124,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     const newProject: Project = {
         id: `proj-${crypto.randomUUID()}`,
         ...project,
+        teamId: project.teamId || '',
+        description: project.description || '',
     };
     setProjects(prev => [newProject, ...prev]);
     toast({ title: "Project Created", description: `Project "${project.name}" created.` });
@@ -132,6 +135,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
     toast({ title: "Project Updated", description: "Project details saved." });
   }, [toast]);
+
+
 
   const deleteProject = useCallback((projectId: string) => {
     setProjects(prev => prev.filter(p => p.id !== projectId));
@@ -143,19 +148,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const addTeam = useCallback((teamData: NewTeam) => {
       const newTeam: Team = {
           id: `team-${crypto.randomUUID()}`,
-          name: teamData.name,
-          members: MOCK_USERS.filter(u => teamData.memberIds.includes(u.id))
+          ...teamData
       };
       setTeams(prev => [newTeam, ...prev]);
       toast({ title: "Team Created", description: `Team "${teamData.name}" created.` });
   }, [toast]);
 
-  const updateTeam = useCallback((teamId: string, updates: { name: string; memberIds: string[] }) => {
-      setTeams(prev => prev.map(t => t.id === teamId ? {
-          ...t,
-          name: updates.name,
-          members: MOCK_USERS.filter(u => updates.memberIds.includes(u.id))
-      } : t));
+  const updateTeam = useCallback((teamId: string, updates: NewTeam) => {
+      setTeams(prev => prev.map(t => t.id === teamId ? { ...t, ...updates } : t));
       toast({ title: "Team Updated", description: "Team details saved." });
   }, [toast]);
 
@@ -165,6 +165,14 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       setProjects(prev => prev.map(p => p.teamId === teamId ? { ...p, teamId: '' } : p));
       toast({ title: "Team Deleted", variant: "destructive", description: "The team has been deleted." });
   }, [toast]);
+
+  const getProjectTeamLead = useCallback((projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project || !project.teamId) return undefined;
+    const team = teams.find(t => t.id === project.teamId);
+    if (!team) return undefined;
+    return MOCK_USERS.find(u => u.id === team.leadId);
+  }, [projects, teams]);
 
   const value = useMemo(
     () => ({
@@ -186,8 +194,9 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       addTeam,
       updateTeam,
       deleteTeam,
+      getProjectTeamLead,
     }),
-    [tasks, tickets, projects, teams, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam]
+    [tasks, tickets, projects, teams, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam, getProjectTeamLead]
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
