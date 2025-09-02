@@ -38,7 +38,7 @@ export default function SignInPage() {
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="any@email.com"
               required
             />
           </div>
@@ -49,7 +49,7 @@ export default function SignInPage() {
                 Forgot your password?
               </Link>
             </div>
-            <Input id="password" type="password" required />
+            <Input id="password" type="password" placeholder="any password" required />
           </div>
           <Button type="submit" className="w-full">
             Login

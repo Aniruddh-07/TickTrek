@@ -46,13 +46,13 @@ export default function SignUpPage() {
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="test@example.com"
               required
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" />
+            <Input id="password" type="password" placeholder="password" required />
           </div>
           <Button type="submit" className="w-full">
             Create an account

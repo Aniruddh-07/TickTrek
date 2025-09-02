@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
             <Input
               id="email"
               type="email"
-              placeholder="m@example.com"
+              placeholder="any@email.com"
               required
             />
           </div>
