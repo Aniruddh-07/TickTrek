@@ -43,6 +43,7 @@ export interface Ticket {
   message: string;
   status: 'open' | 'closed';
   replies: TicketReply[];
+  createdAt: string;
 }
 
 export interface Task {

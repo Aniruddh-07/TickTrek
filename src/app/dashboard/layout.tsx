@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -32,35 +33,77 @@ import Logo from '@/components/logo';
 import { TasksProvider, useTasks } from '@/context/tasks-context';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { UserProvider, useUser } from '@/context/user-context';
+import { NotificationsProvider, useNotifications } from '@/context/notifications-context';
+import { cn } from '@/lib/utils';
 import type { UserRole } from '@/lib/types';
 
-const navItemsBase = [
-    { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard' },
-    { href: '/dashboard/kanban', icon: ListTodo, label: 'Task Board' },
-];
 
-const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; label: string }[]> = {
-  admin: [
-    ...navItemsBase,
-    { href: '/dashboard/projects', icon: FolderKanban, label: 'Projects' },
-    { href: '/dashboard/teams', icon: Users, label: 'Teams' },
-  ],
-  member: [
-    ...navItemsBase,
-    { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
-  ],
-};
+const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+    const pathname = usePathname();
+    const { clearNotifications } = useNotifications();
+    const isActive = pathname === href;
+
+    const handleClick = () => {
+        const pageKey = href.split('/').pop() || 'dashboard';
+        clearNotifications(pageKey as any);
+    }
+
+    return (
+        <Link href={href} onClick={handleClick} className={cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary',
+            isActive ? 'bg-muted text-primary' : 'text-muted-foreground'
+        )}>
+            {children}
+        </Link>
+    )
+}
+
+const MobileNavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
+    const pathname = usePathname();
+    const { clearNotifications } = useNotifications();
+    const isActive = pathname === href;
+
+    const handleClick = () => {
+        const pageKey = href.split('/').pop() || 'dashboard';
+        clearNotifications(pageKey as any);
+    }
+    
+    return (
+        <Link href={href} onClick={handleClick} className={cn(
+            'mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground',
+            isActive ? 'bg-muted text-foreground' : 'text-muted-foreground'
+        )}>
+            {children}
+        </Link>
+    )
+}
 
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, users, setUser } = useUser();
   const { teams } = useTasks();
+  const { notifications } = useNotifications();
 
   const isTeamLead = useMemo(() => {
     if (!user) return false;
     return teams.some(team => team.leadId === user.id);
   }, [user, teams]);
+
+  const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; label: string, notificationKey: keyof typeof notifications }[]> = {
+    admin: [
+        { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard', notificationKey: 'dashboard' },
+        { href: '/dashboard/kanban', icon: ListTodo, label: 'Task Board', notificationKey: 'kanban' },
+        { href: '/dashboard/projects', icon: FolderKanban, label: 'Projects', notificationKey: 'projects' },
+        { href: '/dashboard/teams', icon: Users, label: 'Teams', notificationKey: 'teams' },
+    ],
+    member: [
+        { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard', notificationKey: 'dashboard' },
+        { href: '/dashboard/kanban', icon: ListTodo, label: 'Task Board', notificationKey: 'kanban' },
+        { href: '/dashboard/projects', icon: FolderKanban, label: 'Projects', notificationKey: 'projects' },
+        { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets', notificationKey: 'tickets' },
+    ],
+  };
 
   const navItems = user ? navItemsByRole[user.role] : [];
   
@@ -86,18 +129,13 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                    pathname === item.href
-                      ? 'bg-muted text-primary'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
+                <NavLink key={item.href} href={item.href}>
+                    <div className="relative">
+                        <item.icon className="h-4 w-4" />
+                        {notifications[item.notificationKey] && <div className="absolute top-[-2px] right-[-2px] h-2 w-2 rounded-full bg-red-500" />}
+                    </div>
+                    {item.label}
+                </NavLink>
               ))}
             </nav>
           </div>
@@ -125,18 +163,13 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                   <Logo />
                 </Link>
                 {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                      pathname === item.href
-                        ? 'bg-muted text-foreground'
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
+                  <MobileNavLink key={item.href} href={item.href}>
+                     <div className="relative">
+                        <item.icon className="h-5 w-5" />
+                        {notifications[item.notificationKey] && <div className="absolute top-[-2px] right-[-2px] h-2 w-2 rounded-full bg-red-500" />}
+                     </div>
                     {item.label}
-                  </Link>
+                  </MobileNavLink>
                 ))}
               </nav>
             </SheetContent>
@@ -188,7 +221,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <UserProvider>
       <TasksProvider>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        <NotificationsProvider>
+          <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        </NotificationsProvider>
       </TasksProvider>
     </UserProvider>
   );

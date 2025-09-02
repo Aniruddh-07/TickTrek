@@ -13,6 +13,7 @@ interface TasksContextType {
   projects: Project[];
   teams: Team[];
   users: User[];
+  lastUpdated: number;
   addTask: (task: NewTask) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
@@ -36,7 +37,11 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
   const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
+  const [lastUpdated, setLastUpdated] = useState(Date.now());
+
   const { toast } = useToast();
+
+  const triggerUpdate = () => setLastUpdated(Date.now());
 
   const addTask = useCallback(
     (task: NewTask) => {
@@ -45,6 +50,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         ...task,
       };
       setTasks((prev) => [newTask, ...prev]);
+      triggerUpdate();
       toast({
         title: "Task created",
         description: `Task "${task.title}" has been successfully created.`,
@@ -60,6 +66,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
           task.id === taskId ? { ...task, ...updates } : task
         )
       );
+      triggerUpdate();
       toast({
         title: "Task updated",
         description: "The task has been successfully updated.",
@@ -71,6 +78,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const deleteTask = useCallback(
     (taskId: string) => {
       setTasks((prev) => prev.filter((task) => task.id !== taskId));
+      triggerUpdate();
        toast({
         title: "Task deleted",
         variant: "destructive",
@@ -93,8 +101,10 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       ...ticketData,
       status: 'open',
       replies: [],
+      createdAt: new Date().toISOString(),
     };
     setTickets(prev => [newTicket, ...prev]);
+    triggerUpdate();
     toast({
       title: 'Ticket Raised',
       description: 'Your ticket has been submitted.',
@@ -103,6 +113,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
 
   const updateTicketStatus = useCallback((ticketId: string, status: 'open' | 'closed') => {
     setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status } : t));
+    triggerUpdate();
     toast({
       title: 'Ticket Updated',
       description: `The ticket has been ${status}.`,
@@ -117,6 +128,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
     };
     setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, replies: [...t.replies, newReply] } : t));
+    triggerUpdate();
     toast({ title: "Reply Sent" });
   }, [toast]);
 
@@ -129,20 +141,20 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         description: project.description || '',
     };
     setProjects(prev => [newProject, ...prev]);
+    triggerUpdate();
     toast({ title: "Project Created", description: `Project "${project.name}" created.` });
   }, [toast]);
 
   const updateProject = useCallback((projectId: string, updates: Partial<Project>) => {
     setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
+    triggerUpdate();
     toast({ title: "Project Updated", description: "Project details saved." });
   }, [toast]);
 
-
-
   const deleteProject = useCallback((projectId: string) => {
     setProjects(prev => prev.filter(p => p.id !== projectId));
-    // also delete tasks associated with this project
     setTasks(prev => prev.filter(t => t.projectId !== projectId));
+    triggerUpdate();
     toast({ title: "Project Deleted", variant: "destructive", description: "The project has been deleted." });
   }, [toast]);
 
@@ -152,25 +164,26 @@ export function TasksProvider({ children }: { children: ReactNode }) {
           ...teamData
       };
       setTeams(prev => [newTeam, ...prev]);
+      triggerUpdate();
       toast({ title: "Team Created", description: `Team "${teamData.name}" created.` });
   }, [toast]);
 
   const updateTeam = useCallback((teamId: string, updates: NewTeam) => {
       setTeams(prev => prev.map(t => t.id === teamId ? { ...t, ...updates } : t));
+      triggerUpdate();
       toast({ title: "Team Updated", description: "Team details saved." });
   }, [toast]);
 
   const deleteTeam = useCallback((teamId: string) => {
     setTeams(prev => prev.filter(t => t.id !== teamId));
-    // Also remove this team from any projects it was assigned to
     setProjects(prevProjects => prevProjects.map(p => ({
         ...p,
         teamIds: p.teamIds.filter(id => id !== teamId),
     })));
+    triggerUpdate();
     toast({ title: "Team Deleted", variant: "destructive", description: "The team has been deleted." });
-}, [toast]);
+  }, [toast]);
 
-  // This function is now less relevant with many-to-many, returning first lead found
   const getProjectTeamLead = useCallback((projectId: string) => {
     const project = projects.find(p => p.id === projectId);
     if (!project || !project.teamIds.length) return undefined;
@@ -186,6 +199,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       projects,
       teams,
       users: MOCK_USERS,
+      lastUpdated,
       addTask,
       updateTask,
       deleteTask,
@@ -201,7 +215,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       deleteTeam,
       getProjectTeamLead,
     }),
-    [tasks, tickets, projects, teams, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam, getProjectTeamLead]
+    [tasks, tickets, projects, teams, lastUpdated, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam, getProjectTeamLead]
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
