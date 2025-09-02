@@ -57,6 +57,8 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
         dueDate: initialData.dueDate,
       }
     : {
+        title: '',
+        description: '',
         status: 'pending',
         priority: 'medium',
         dueDate: new Date().toISOString().split('T')[0],
@@ -103,6 +105,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                   placeholder="Add a more detailed description..."
                   className="resize-none"
                   {...field}
+                  value={field.value ?? ''}
                 />
               </FormControl>
               <FormMessage />
@@ -157,7 +160,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
-              <Select onValue-change={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
