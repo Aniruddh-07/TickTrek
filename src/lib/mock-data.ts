@@ -1,0 +1,68 @@
+import type { Task } from './types';
+
+export const MOCK_TASKS: Task[] = [
+  {
+    id: 'task-1',
+    title: 'Design landing page mockups',
+    description: 'Create high-fidelity mockups in Figma for the new landing page, including mobile and desktop views.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString().split('T')[0],
+    status: 'in-progress',
+    priority: 'high',
+  },
+  {
+    id: 'task-2',
+    title: 'Develop API for user authentication',
+    description: 'Set up endpoints for user sign-up, sign-in, and sign-out. Include password hashing and JWT.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
+    status: 'pending',
+    priority: 'high',
+  },
+  {
+    id: 'task-3',
+    title: 'Fix bug in the payment gateway',
+    description: 'Users are reporting a 500 error when using PayPal. Investigate and deploy a hotfix.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
+    status: 'in-progress',
+    priority: 'medium',
+  },
+  {
+    id: 'task-4',
+    title: 'Write documentation for the new feature',
+    description: 'Document the new drag-and-drop feature for the Kanban board. Include examples and usage guidelines.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 10)).toISOString().split('T')[0],
+    status: 'pending',
+    priority: 'low',
+  },
+  {
+    id: 'task-5',
+    title: 'Refactor old component library',
+    description: 'The old component library is outdated. Refactor it to use the new design system and improve performance.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0],
+    status: 'pending',
+    priority: 'medium',
+  },
+  {
+    id: 'task-6',
+    title: 'User testing for the beta release',
+    description: 'Conduct user testing sessions with a select group of beta testers. Gather feedback and identify usability issues.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
+    status: 'completed',
+    priority: 'medium',
+  },
+  {
+    id: 'task-7',
+    title: 'Deploy version 2.0 to production',
+    description: 'Finalize the release notes, run final tests, and deploy the new version to the production environment.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString().split('T')[0],
+    status: 'pending',
+    priority: 'high',
+  },
+  {
+    id: 'task-8',
+    title: 'Update marketing materials',
+    description: 'Create new screenshots and videos for the app store listing and website to reflect the new UI.',
+    dueDate: new Date(new Date().setDate(new Date().getDate() + 12)).toISOString().split('T')[0],
+    status: 'completed',
+    priority: 'low',
+  },
+];
