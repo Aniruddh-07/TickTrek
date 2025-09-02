@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -73,6 +74,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
         ...initialData,
         dueDate: new Date(initialData.dueDate).toISOString().split('T')[0],
         assigneeId: initialData.assigneeId || 'unassigned',
+        description: initialData.description || '',
       }
     : {
         title: '',
@@ -137,7 +139,6 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                   placeholder="Add a more detailed description..."
                   className="resize-none"
                   {...field}
-                  value={field.value ?? ''}
                 />
               </FormControl>
               <FormMessage />
