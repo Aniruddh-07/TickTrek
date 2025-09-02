@@ -25,16 +25,19 @@ import {
 import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/types';
 import { useUser } from '@/context/user-context';
 import { MOCK_PROJECTS, MOCK_TEAMS } from '@/lib/mock-data';
+import { Progress } from '@/components/ui/progress';
 
 function AdminDashboard({ tasks }: { tasks: Task[] }) {
+  const { projects } = useTasks();
+  
   const projectsWithProgress = useMemo(() => {
-    return MOCK_PROJECTS.map(project => {
+    return projects.map(project => {
       const projectTasks = tasks.filter(t => t.projectId === project.id);
       const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
       const progress = projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0;
       return { ...project, taskCount: projectTasks.length, progress };
     });
-  }, [tasks]);
+  }, [projects, tasks]);
 
   return (
     <div>
@@ -45,11 +48,12 @@ function AdminDashboard({ tasks }: { tasks: Task[] }) {
             <h3 className="font-bold">{project.name}</h3>
             <p className="text-sm text-muted-foreground">{project.description}</p>
             <div className="mt-4">
-              <p className="text-sm">Progress: {Math.round(project.progress)}%</p>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-1">
-                <div className="bg-primary h-2.5 rounded-full" style={{ width: `${project.progress}%` }}></div>
+              <div className='flex justify-between items-center mb-1'>
+                 <p className="text-sm">Progress</p>
+                 <p className="text-sm font-medium">{Math.round(project.progress)}%</p>
               </div>
-              <p className="text-sm mt-2">{project.taskCount} tasks</p>
+              <Progress value={project.progress} className="h-2" />
+              <p className="text-sm mt-2 text-muted-foreground">{project.taskCount} tasks</p>
             </div>
           </div>
         ))}
@@ -59,7 +63,8 @@ function AdminDashboard({ tasks }: { tasks: Task[] }) {
 }
 
 function TeamLeadDashboard({ tasks, user }: { tasks: Task[], user: any }) {
-    const managedProjects = MOCK_PROJECTS.filter(p => p.leadId === user.id);
+    const { projects } = useTasks();
+    const managedProjects = projects.filter(p => p.leadId === user.id);
     const projectIds = managedProjects.map(p => p.id);
     const teamTasks = tasks.filter(t => projectIds.includes(t.projectId));
 

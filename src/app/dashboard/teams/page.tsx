@@ -1,16 +1,55 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PlusCircle, Edit, Trash2, UserPlus } from 'lucide-react';
-import { MOCK_TEAMS } from '@/lib/mock-data';
 import { useUser } from '@/context/user-context';
+import { useTasks } from '@/context/tasks-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TeamForm } from '@/components/team-form';
+import type { Team } from '@/lib/types';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 export default function TeamsPage() {
     const { user } = useUser();
+    const { teams, deleteTeam } = useTasks();
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [editingTeam, setEditingTeam] = useState<Team | undefined>(undefined);
+
+    const handleCreateClick = () => {
+        setEditingTeam(undefined);
+        setIsSheetOpen(true);
+    };
+
+    const handleEditClick = (team: Team) => {
+        setEditingTeam(team);
+        setIsSheetOpen(true);
+    };
+
+    const handleCloseSheet = () => {
+        setIsSheetOpen(false);
+        setEditingTeam(undefined);
+    };
+
 
     if (user?.role !== 'admin') {
         return <p>You do not have permission to view this page.</p>;
@@ -23,22 +62,37 @@ export default function TeamsPage() {
                     <h1 className="text-2xl font-bold font-headline">Manage Teams</h1>
                     <p className="text-muted-foreground">Create teams and manage members.</p>
                 </div>
-                <Button>
+                <Button onClick={handleCreateClick}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Create Team
                 </Button>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {MOCK_TEAMS.map(team => (
+                {teams.map(team => (
                     <Card key={team.id}>
                         <CardHeader>
                             <CardTitle className="flex justify-between items-center">
                                 {team.name}
                                 <div className="flex gap-2">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8"><UserPlus className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8"><Edit className="h-4 w-4" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500"><Trash2 className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(team)}><Edit className="h-4 w-4" /></Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the team and its associations.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => deleteTeam(team.id)}>Continue</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             </CardTitle>
                         </CardHeader>
@@ -59,6 +113,23 @@ export default function TeamsPage() {
                     </Card>
                 ))}
             </div>
+             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
+                <SheetHeader>
+                    <SheetTitle className="font-headline">
+                    {editingTeam ? 'Edit Team' : 'Create New Team'}
+                    </SheetTitle>
+                    <SheetDescription>
+                    {editingTeam
+                        ? 'Update the details of your team.'
+                        : 'Fill in the details below to create a new team.'}
+                    </SheetDescription>
+                </SheetHeader>
+                <div className="py-4">
+                    <TeamForm initialData={editingTeam} onClose={handleCloseSheet} />
+                </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

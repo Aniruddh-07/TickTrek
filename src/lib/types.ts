@@ -47,3 +47,5 @@ export interface Task {
 }
 
 export type NewTask = Omit<Task, 'id'>;
+export type NewProject = Omit<Project, 'id'>;
+export type NewTeam = { name: string; memberIds: string[] };

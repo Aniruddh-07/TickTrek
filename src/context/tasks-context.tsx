@@ -2,19 +2,28 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { MOCK_TASKS, MOCK_TICKETS } from '@/lib/mock-data';
-import type { Task, NewTask, Ticket } from '@/lib/types';
+import { MOCK_TASKS, MOCK_TICKETS, MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS } from '@/lib/mock-data';
+import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface TasksContextType {
   tasks: Task[];
   tickets: Ticket[];
+  projects: Project[];
+  teams: Team[];
+  users: User[];
   addTask: (task: NewTask) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   getTaskById: (taskId: string) => Task | undefined;
   raiseTicket: (ticket: Omit<Ticket, 'id' | 'status'>) => void;
   updateTicketStatus: (ticketId: string, status: 'open' | 'closed') => void;
+  addProject: (project: NewProject) => void;
+  updateProject: (projectId: string, updates: Partial<Project>) => void;
+  deleteProject: (projectId: string) => void;
+  addTeam: (team: NewTeam) => void;
+  updateTeam: (teamId: string, updates: { name: string; memberIds: string[] }) => void;
+  deleteTeam: (teamId: string) => void;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -22,6 +31,8 @@ const TasksContext = createContext<TasksContextType | undefined>(undefined);
 export function TasksProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
   const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
+  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
+  const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
   const { toast } = useToast();
 
   const addTask = useCallback(
@@ -94,18 +105,74 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     });
   }, [toast]);
 
+  const addProject = useCallback((project: NewProject) => {
+    const newProject: Project = {
+        id: `proj-${crypto.randomUUID()}`,
+        ...project,
+    };
+    setProjects(prev => [newProject, ...prev]);
+    toast({ title: "Project Created", description: `Project "${project.name}" created.` });
+  }, [toast]);
+
+  const updateProject = useCallback((projectId: string, updates: Partial<Project>) => {
+    setProjects(prev => prev.map(p => p.id === projectId ? { ...p, ...updates } : p));
+    toast({ title: "Project Updated", description: "Project details saved." });
+  }, [toast]);
+
+  const deleteProject = useCallback((projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    // also delete tasks associated with this project
+    setTasks(prev => prev.filter(t => t.projectId !== projectId));
+    toast({ title: "Project Deleted", variant: "destructive", description: "The project has been deleted." });
+  }, [toast]);
+
+  const addTeam = useCallback((teamData: NewTeam) => {
+      const newTeam: Team = {
+          id: `team-${crypto.randomUUID()}`,
+          name: teamData.name,
+          members: MOCK_USERS.filter(u => teamData.memberIds.includes(u.id))
+      };
+      setTeams(prev => [newTeam, ...prev]);
+      toast({ title: "Team Created", description: `Team "${teamData.name}" created.` });
+  }, [toast]);
+
+  const updateTeam = useCallback((teamId: string, updates: { name: string; memberIds: string[] }) => {
+      setTeams(prev => prev.map(t => t.id === teamId ? {
+          ...t,
+          name: updates.name,
+          members: MOCK_USERS.filter(u => updates.memberIds.includes(u.id))
+      } : t));
+      toast({ title: "Team Updated", description: "Team details saved." });
+  }, [toast]);
+
+  const deleteTeam = useCallback((teamId: string) => {
+      setTeams(prev => prev.filter(t => t.id !== teamId));
+      // You might want to unassign projects from this team
+      setProjects(prev => prev.map(p => p.teamId === teamId ? { ...p, teamId: '' } : p));
+      toast({ title: "Team Deleted", variant: "destructive", description: "The team has been deleted." });
+  }, [toast]);
+
   const value = useMemo(
     () => ({
       tasks,
       tickets,
+      projects,
+      teams,
+      users: MOCK_USERS,
       addTask,
       updateTask,
       deleteTask,
       getTaskById,
       raiseTicket,
       updateTicketStatus,
+      addProject,
+      updateProject,
+      deleteProject,
+      addTeam,
+      updateTeam,
+      deleteTeam,
     }),
-    [tasks, tickets, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus]
+    [tasks, tickets, projects, teams, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam]
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
