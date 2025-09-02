@@ -20,11 +20,11 @@ import {
   LayoutGrid,
   ListTodo,
   Menu,
-  Rocket,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Logo from '@/components/logo';
 import { TasksProvider } from '@/context/tasks-context';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard' },
@@ -110,6 +110,8 @@ export default function DashboardLayout({
             <div className="w-full flex-1">
               {/* Optional: Header Search Bar */}
             </div>
+
+            <ThemeSwitcher />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

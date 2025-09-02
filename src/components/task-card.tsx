@@ -53,7 +53,7 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
       className={cn(
-        'transition-all hover:shadow-md',
+        'transition-all duration-300 ease-in-out hover:shadow-xl hover:scale-[1.02]',
         priorityClasses[task.priority],
         'border-l-4',
         isDraggable ? 'cursor-grab active:cursor-grabbing' : ''
