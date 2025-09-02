@@ -6,10 +6,13 @@ import { MOCK_USERS, MOCK_TASKS } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function TicketsPage() {
   const { user } = useUser();
-  const { tickets, updateTicketStatus } = useTasks();
+  const { tickets, updateTicketStatus, addTicketReply } = useTasks();
 
   if (!user) return <p>Loading...</p>;
 
@@ -25,6 +28,16 @@ export default function TicketsPage() {
       }
       return false; // Admins don't manage tickets directly in this design
   });
+
+  const handleReplySubmit = (ticketId: string, e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const replyMessage = formData.get('reply') as string;
+    if (replyMessage.trim() && user) {
+        addTicketReply(ticketId, replyMessage, user.id);
+        e.currentTarget.reset();
+    }
+  };
 
   return (
     <div>
@@ -61,13 +74,41 @@ export default function TicketsPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="p-4 bg-muted rounded-md">{ticket.message}</p>
+                            <p className="p-4 bg-muted rounded-md mb-4">{ticket.message}</p>
+                            
+                            <div className="space-y-4">
+                                {ticket.replies.map(reply => {
+                                    const author = MOCK_USERS.find(u => u.id === reply.authorId);
+                                    return (
+                                        <div key={reply.id} className="flex gap-3">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={author?.avatar} />
+                                                <AvatarFallback>{author?.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm">{author?.name}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm bg-muted p-3 rounded-md mt-1">{reply.message}</p>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
                             {user.role === 'team-lead' && ticket.status === 'open' && (
-                                <div className="flex justify-end mt-4">
-                                    <Button onClick={() => updateTicketStatus(ticket.id, 'closed')}>
-                                        Mark as Closed
-                                    </Button>
-                                </div>
+                                <form className="mt-4 space-y-2" onSubmit={(e) => handleReplySubmit(ticket.id, e)}>
+                                    <Textarea name="reply" placeholder="Type your reply..." required />
+                                    <div className="flex justify-end gap-2">
+                                        <Button type="submit">Send Reply</Button>
+                                        <Button variant="secondary" onClick={() => updateTicketStatus(ticket.id, 'closed')}>
+                                            Mark as Closed
+                                        </Button>
+                                    </div>
+                                </form>
                             )}
                         </CardContent>
                     </Card>

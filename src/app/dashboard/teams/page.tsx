@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Edit, Trash2, UserPlus } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, UserPlus, MoreVertical } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import { useTasks } from '@/context/tasks-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TeamForm } from '@/components/team-form';
-import type { Team } from '@/lib/types';
+import type { Team, User, UserRole } from '@/lib/types';
 import {
   Sheet,
   SheetContent,
@@ -27,10 +27,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuRadioGroup, DropdownMenuRadioItem } from '@/components/ui/dropdown-menu';
 
 
 export default function TeamsPage() {
-    const { user } = useUser();
+    const { user, setUserRole } = useUser();
     const { teams, deleteTeam } = useTasks();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<Team | undefined>(undefined);
@@ -48,6 +49,10 @@ export default function TeamsPage() {
     const handleCloseSheet = () => {
         setIsSheetOpen(false);
         setEditingTeam(undefined);
+    };
+
+    const handleRoleChange = (userId: string, role: UserRole) => {
+        setUserRole(userId, role);
     };
 
 
@@ -100,12 +105,31 @@ export default function TeamsPage() {
                             <h4 className="font-semibold mb-2">Members</h4>
                             <div className="flex flex-wrap gap-2">
                                 {team.members.map(member => (
-                                    <div key={member.id} className="flex items-center gap-2 bg-muted p-2 rounded-md text-sm">
+                                     <div key={member.id} className="flex items-center gap-2 bg-muted p-2 rounded-md text-sm">
                                          <Avatar className="h-6 w-6">
                                             <AvatarImage src={member.avatar} />
                                             <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        {member.name}
+                                        <div className="flex flex-col">
+                                          <span>{member.name}</span>
+                                          <span className="text-xs text-muted-foreground capitalize">{member.role.replace('-', ' ')}</span>
+                                        </div>
+                                         <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" disabled={member.id === user.id}>
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                 <DropdownMenuRadioGroup 
+                                                    value={member.role} 
+                                                    onValueChange={(value) => handleRoleChange(member.id, value as UserRole)}
+                                                  >
+                                                    <DropdownMenuRadioItem value="member">Member</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="team-lead">Team Lead</DropdownMenuRadioItem>
+                                                </DropdownMenuRadioGroup>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 ))}
                             </div>

@@ -27,12 +27,20 @@ export interface Project {
   description: string;
 }
 
+export interface TicketReply {
+  id: string;
+  authorId: string;
+  message: string;
+  createdAt: string;
+}
+
 export interface Ticket {
   id: string;
   taskId: string;
   raisedBy: string; // userId
   message: string;
   status: 'open' | 'closed';
+  replies: TicketReply[];
 }
 
 export interface Task {

@@ -32,7 +32,6 @@ import { TasksProvider } from '@/context/tasks-context';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { UserProvider, useUser } from '@/context/user-context';
 import type { UserRole } from '@/lib/types';
-import { MOCK_USERS } from '@/lib/mock-data';
 
 const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; label: string }[]> = {
   admin: [
@@ -56,7 +55,7 @@ const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; 
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, setUser } = useUser();
+  const { user, users, setUser } = useUser();
 
   const navItems = user ? navItemsByRole[user.role] : [];
 
@@ -156,8 +155,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               <DropdownMenuLabel>My Account ({user.role})</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Switch User</DropdownMenuLabel>
-               <DropdownMenuRadioGroup value={user.id} onValueChange={(id) => setUser(MOCK_USERS.find(u => u.id === id)!)}>
-                {MOCK_USERS.map(u => (
+               <DropdownMenuRadioGroup value={user.id} onValueChange={(id) => setUser(users.find(u => u.id === id)!)}>
+                {users.map(u => (
                   <DropdownMenuRadioItem key={u.id} value={u.id}>{u.name} ({u.role})</DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>

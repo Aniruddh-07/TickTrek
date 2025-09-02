@@ -99,6 +99,8 @@ export const MOCK_TASKS: Task[] = [
 ];
 
 export const MOCK_TICKETS: Ticket[] = [
-    { id: 'ticket-1', taskId: 'task-1', raisedBy: 'user-3', message: 'I need access to the Figma files.', status: 'open'},
-    { id: 'ticket-2', taskId: 'task-2', raisedBy: 'user-4', message: 'Which hashing algorithm should I use?', status: 'open'},
+    { id: 'ticket-1', taskId: 'task-1', raisedBy: 'user-3', message: 'I need access to the Figma files.', status: 'open', replies: []},
+    { id: 'ticket-2', taskId: 'task-2', raisedBy: 'user-4', message: 'Which hashing algorithm should I use?', status: 'open', replies: [
+      { id: 'reply-1', authorId: 'user-5', message: 'Please use bcrypt for hashing.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() }
+    ]},
 ];

@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { MOCK_TASKS, MOCK_TICKETS, MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS } from '@/lib/mock-data';
-import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam } from '@/lib/types';
+import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam, TicketReply } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface TasksContextType {
@@ -16,8 +16,9 @@ interface TasksContextType {
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   getTaskById: (taskId: string) => Task | undefined;
-  raiseTicket: (ticket: Omit<Ticket, 'id' | 'status'>) => void;
+  raiseTicket: (ticket: Omit<Ticket, 'id' | 'status' | 'replies'>) => void;
   updateTicketStatus: (ticketId: string, status: 'open' | 'closed') => void;
+  addTicketReply: (ticketId: string, message: string, authorId: string) => void;
   addProject: (project: NewProject) => void;
   updateProject: (projectId: string, updates: Partial<Project>) => void;
   deleteProject: (projectId: string) => void;
@@ -84,11 +85,12 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     [tasks]
   );
 
-  const raiseTicket = useCallback((ticketData: Omit<Ticket, 'id' | 'status'>) => {
+  const raiseTicket = useCallback((ticketData: Omit<Ticket, 'id' | 'status' | 'replies'>) => {
     const newTicket: Ticket = {
       id: `ticket-${crypto.randomUUID()}`,
       ...ticketData,
       status: 'open',
+      replies: [],
     };
     setTickets(prev => [newTicket, ...prev]);
     toast({
@@ -104,6 +106,18 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       description: `The ticket has been ${status}.`,
     });
   }, [toast]);
+
+  const addTicketReply = useCallback((ticketId: string, message: string, authorId: string) => {
+    const newReply: TicketReply = {
+        id: `reply-${crypto.randomUUID()}`,
+        authorId,
+        message,
+        createdAt: new Date().toISOString(),
+    };
+    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, replies: [...t.replies, newReply] } : t));
+    toast({ title: "Reply Sent" });
+  }, [toast]);
+
 
   const addProject = useCallback((project: NewProject) => {
     const newProject: Project = {
@@ -165,6 +179,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       getTaskById,
       raiseTicket,
       updateTicketStatus,
+      addTicketReply,
       addProject,
       updateProject,
       deleteProject,
@@ -172,7 +187,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       updateTeam,
       deleteTeam,
     }),
-    [tasks, tickets, projects, teams, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam]
+    [tasks, tickets, projects, teams, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam]
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
