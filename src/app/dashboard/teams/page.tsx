@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -84,24 +83,24 @@ export default function TeamsPage() {
                 {teamsWithMembers.map(team => (
                     <Card key={team.id}>
                         <CardHeader>
-                            <CardTitle className="flex justify-between items-center">
-                                {team.name}
-                                <div className="flex gap-2">
+                            <CardTitle className="flex justify-between items-start font-headline">
+                                <span className="flex-1">{team.name}</span>
+                                <div className="flex gap-1 ml-4">
                                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(team)}><Edit className="h-4 w-4" /></Button>
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                           <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the team and its associations.
+                                            This action cannot be undone. This will permanently delete the team. Any projects assigned to this team will be unassigned.
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => deleteTeam(team.id)}>Continue</AlertDialogAction>
+                                          <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => deleteTeam(team.id)}>Continue</AlertDialogAction>
                                         </AlertDialogFooter>
                                       </AlertDialogContent>
                                     </AlertDialog>

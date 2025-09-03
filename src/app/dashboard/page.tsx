@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -72,13 +71,13 @@ function AdminDashboard() {
         {pendingUsers.length > 0 && (
             <Card>
                 <CardHeader>
-                    <CardTitle>Pending Approvals</CardTitle>
+                    <CardTitle className="font-headline">Pending Approvals</CardTitle>
                     <CardDescription>New users are waiting to join your organization.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {pendingUsers.map(user => (
-                            <div key={user.id} className="flex items-center justify-between p-2 rounded-lg bg-muted">
+                            <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted">
                                 <div className="flex items-center gap-4">
                                     <Avatar>
                                         <AvatarImage src={user.avatar} />
@@ -101,7 +100,7 @@ function AdminDashboard() {
         )}
         <Card>
         <CardHeader>
-            <CardTitle>Admin Overview</CardTitle>
+            <CardTitle className="font-headline">Admin Overview</CardTitle>
             <CardDescription>Real-time progress of teams and projects across the workspace.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
@@ -171,7 +170,7 @@ function TeamLeadDashboard({ user }: { user: User }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Team Member Progress</CardTitle>
+        <CardTitle className="font-headline">Team Member Progress</CardTitle>
         <CardDescription>Completion progress of your team members' assigned tasks.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -267,7 +266,7 @@ function FilteredTaskView({ tasks }: { tasks: Task[] }) {
       
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative sm:col-span-2">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
             <Input
                 type="search"
                 placeholder="Search tasks by title or description..."

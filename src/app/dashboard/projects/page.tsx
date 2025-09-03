@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -89,16 +88,16 @@ export default function ProjectsPage() {
                 {projectsWithDetails.map(project => (
                     <Card key={project.id}>
                         <CardHeader>
-                            <CardTitle className="flex justify-between items-center">
-                                {project.name}
+                            <CardTitle className="flex justify-between items-start font-headline">
+                                <span className="flex-1">{project.name}</span>
                                 {user?.role === 'admin' && (
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1 ml-4">
                                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(project)}>
                                             <Edit className="h-4 w-4" />
                                         </Button>
                                         <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </AlertDialogTrigger>
@@ -111,7 +110,7 @@ export default function ProjectsPage() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => deleteProject(project.id)}>Continue</AlertDialogAction>
+                                            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => deleteProject(project.id)}>Continue</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                         </AlertDialog>
