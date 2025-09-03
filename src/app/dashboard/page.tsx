@@ -109,6 +109,48 @@ function AdminDashboard() {
   );
 }
 
+function TeamLeadDashboard({ user }: { user: User }) {
+  const { tasks, teams, users } = useTasks();
+
+  const memberProgress = useMemo(() => {
+    if (!user) return [];
+
+    const myLeadTeams = teams.filter(t => t.leadId === user.id);
+    const myTeamMemberIds = new Set(myLeadTeams.flatMap(t => t.memberIds));
+    const myTeamMembers = users.filter(u => myTeamMemberIds.has(u.id) && u.id !== user.id);
+
+    return myTeamMembers.map(member => {
+      const memberTasks = tasks.filter(t => t.assigneeId === member.id);
+      const completedTasks = memberTasks.filter(t => t.status === 'completed').length;
+      const progress = memberTasks.length > 0 ? (completedTasks / memberTasks.length) * 100 : 0;
+      
+      return {
+        name: member.name,
+        progress: Math.round(progress),
+      };
+    });
+  }, [user, teams, users, tasks]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Team Member Progress</CardTitle>
+        <CardDescription>Completion progress of your team members' assigned tasks.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={memberProgress}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis unit="%" />
+            <Tooltip />
+            <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  )
+}
 
 function MemberDashboard({ user }: { user: User }) {
     const { tasks } = useTasks();
@@ -257,11 +299,13 @@ function FilteredTaskView({ tasks }: { tasks: Task[] }) {
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const { organizations } = useTasks();
+  const { organizations, teams } = useTasks();
   
   if (!user) return <p>Loading...</p>;
   
   const organization = organizations.find(org => org.id === user.organizationId);
+  const isTeamLead = useMemo(() => teams.some(team => team.leadId === user.id), [teams, user.id]);
+
 
   return (
     <div className="space-y-6">
@@ -275,7 +319,8 @@ export default function DashboardPage() {
         </div>
         
         {user.role === 'admin' && <AdminDashboard />}
-        {user.role === 'member' && <MemberDashboard user={user} />}
+        {isTeamLead && <TeamLeadDashboard user={user} />}
+        <MemberDashboard user={user} />
     </div>
   );
 }
