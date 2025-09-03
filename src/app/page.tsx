@@ -5,10 +5,26 @@ import {
   LayoutGrid,
   Rocket,
   Palette,
+  Users,
+  FolderKanban,
+  Ticket,
+  Star,
+  Github,
+  Twitter,
+  Linkedin,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Logo from '@/components/logo';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function LandingPage() {
   return (
@@ -50,16 +66,13 @@ export default function LandingPage() {
               <Button asChild size="lg">
                 <Link href="/signup">Get Started For Free</Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="#features">Learn More</Link>
-              </Button>
             </div>
           </div>
         </section>
 
         <section
           id="features"
-          className="container space-y-6 bg-slate-50 py-8 dark:bg-transparent md:py-12 lg:py-24"
+          className="container space-y-8 bg-slate-50 py-8 dark:bg-transparent md:py-12 lg:py-24"
         >
           <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
             <h2 className="font-headline text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
@@ -69,7 +82,7 @@ export default function LandingPage() {
               Everything you need to move work forward.
             </p>
           </div>
-          <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
+          <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] lg:grid-cols-3">
             <Card>
               <CardHeader>
                 <CheckCircle className="mb-4 h-8 w-8 text-primary" />
@@ -92,6 +105,33 @@ export default function LandingPage() {
             </Card>
             <Card>
               <CardHeader>
+                <FolderKanban className="mb-4 h-8 w-8 text-primary" />
+                <CardTitle className="font-headline">Project Organization</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  Group tasks into projects and assign projects to specific teams for focused collaboration.
+              </CardContent>
+            </Card>
+             <Card>
+              <CardHeader>
+                <Users className="mb-4 h-8 w-8 text-primary" />
+                <CardTitle className="font-headline">Team Collaboration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                Create teams, assign members and leads, and manage permissions across the application.
+              </CardContent>
+            </Card>
+             <Card>
+              <CardHeader>
+                <Ticket className="mb-4 h-8 w-8 text-primary" />
+                <CardTitle className="font-headline">Internal Ticketing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                An integrated ticketing system for users to raise issues and get support from team leads or admins.
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
                 <Palette className="mb-4 h-8 w-8 text-primary" />
                 <CardTitle className="font-headline">Clean UI</CardTitle>
               </CardHeader>
@@ -102,12 +142,76 @@ export default function LandingPage() {
             </Card>
           </div>
         </section>
+
+        <section id="testimonials" className="container py-8 md:py-12 lg:py-24">
+          <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
+            <h2 className="font-headline text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
+              Loved by Teams Worldwide
+            </h2>
+            <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
+              See what our users are saying about their experience with TickTrek.
+            </p>
+          </div>
+           <Carousel
+            opts={{
+              align: "start",
+            }}
+            className="w-full max-w-4xl mx-auto mt-12"
+          >
+            <CarouselContent>
+              {Array.from({ length: 3 }).map((_, index) => (
+                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-1">
+                    <Card className="h-full flex flex-col">
+                      <CardContent className="p-6 flex-grow flex flex-col justify-between">
+                         <p className="text-muted-foreground italic mb-4">"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam."</p>
+                         <div className="flex items-center gap-4">
+                            <Avatar>
+                                <AvatarImage src={`https://picsum.photos/seed/user${index}/50/50`} data-ai-hint="user avatar" />
+                                <AvatarFallback>{`U${index+1}`}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <p className="font-semibold">Lorem Ipsum</p>
+                                <p className="text-sm text-muted-foreground">CEO, Dolor Sit Inc.</p>
+                            </div>
+                         </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </section>
+        
+        <section id="github" className="bg-slate-50 dark:bg-transparent">
+             <div className="container py-12 text-center">
+                <h2 className="font-headline text-3xl font-bold">Like What You See?</h2>
+                <p className="mt-2 text-muted-foreground">This project is open-source. Show your support by starring it on GitHub!</p>
+                <Button asChild size="lg" className="mt-6">
+                    <Link href="https://github.com/your-username/ticktrek" target="_blank" rel="noopener noreferrer">
+                        <Star className="mr-2 h-5 w-5" /> Star on GitHub
+                    </Link>
+                </Button>
+            </div>
+        </section>
       </main>
-      <footer className="py-6 md:px-8 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            Built by Firebase Studio.
-          </p>
+      <footer className="py-8 md:px-8 border-t">
+        <div className="container flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+                 <Logo />
+            </div>
+             <div className="flex items-center gap-4">
+                <Link href="#" aria-label="GitHub"><Github className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" /></Link>
+                <Link href="#" aria-label="Twitter"><Twitter className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" /></Link>
+                <Link href="#" aria-label="LinkedIn"><Linkedin className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" /></Link>
+                <Link href="mailto:upadhyayaniruddh482@gmail.com" aria-label="Gmail"><Mail className="h-6 w-6 text-muted-foreground hover:text-primary transition-colors" /></Link>
+             </div>
+             <p className="text-center text-sm text-muted-foreground">
+                Made with <span className="text-red-500">❤️</span> by <a href="https://aniruddhu.vercel.app/" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">@Aniruddh</a>
+            </p>
         </div>
       </footer>
     </div>
