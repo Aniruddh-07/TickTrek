@@ -27,10 +27,14 @@ import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/types';
 import { useUser } from '@/context/user-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
 function AdminDashboard() {
-  const { tasks, projects, teams } = useTasks();
+  const { data, approveUser, denyUser } = useTasks();
+  const { tasks, projects, teams, users } = data;
+  
+  const pendingUsers = users.filter(u => u.status === 'pending-approval');
 
   const teamProgress = useMemo(() => {
     return teams.map(team => {
@@ -64,53 +68,86 @@ function AdminDashboard() {
 
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Admin Overview</CardTitle>
-        <CardDescription>Real-time progress of teams and projects across the workspace.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-2">
+    <div className="space-y-6">
+        {pendingUsers.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pending Approvals</CardTitle>
+                    <CardDescription>New users are waiting to join your organization.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {pendingUsers.map(user => (
+                            <div key={user.id} className="flex items-center justify-between p-2 rounded-lg bg-muted">
+                                <div className="flex items-center gap-4">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatar} />
+                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button size="sm" onClick={() => approveUser(user.id)}>Approve</Button>
+                                    <Button size="sm" variant="destructive" onClick={() => denyUser(user.id)}>Deny</Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        )}
         <Card>
-          <CardHeader>
-            <CardTitle>Team Progress</CardTitle>
-            <CardDescription>Percentage of completed tasks per team.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={teamProgress}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis unit="%" />
-                <Tooltip />
-                <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+        <CardHeader>
+            <CardTitle>Admin Overview</CardTitle>
+            <CardDescription>Real-time progress of teams and projects across the workspace.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2">
+            <Card>
+            <CardHeader>
+                <CardTitle>Team Progress</CardTitle>
+                <CardDescription>Percentage of completed tasks per team.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={teamProgress}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis unit="%" />
+                    <Tooltip />
+                    <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+                </ResponsiveContainer>
+            </CardContent>
+            </Card>
+            <Card>
+            <CardHeader>
+                <CardTitle>Project Progress</CardTitle>
+                <CardDescription>Percentage of completed tasks per project.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={projectProgress}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis unit="%" />
+                    <Tooltip />
+                    <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+                </ResponsiveContainer>
+            </CardContent>
+            </Card>
+        </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Progress</CardTitle>
-            <CardDescription>Percentage of completed tasks per project.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={projectProgress}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis unit="%" />
-                <Tooltip />
-                <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 
 function TeamLeadDashboard({ user }: { user: User }) {
-  const { tasks, teams, users } = useTasks();
+  const { data } = useTasks();
+  const { tasks, teams, users } = data;
 
   const memberProgress = useMemo(() => {
     if (!user) return [];
@@ -153,7 +190,8 @@ function TeamLeadDashboard({ user }: { user: User }) {
 }
 
 function MemberDashboard({ user }: { user: User }) {
-    const { tasks } = useTasks();
+    const { data } = useTasks();
+    const { tasks } = data;
     const myTasks = tasks.filter(t => t.assigneeId === user.id);
     return (
         <div>
@@ -171,7 +209,8 @@ function FilteredTaskView({ tasks }: { tasks: Task[] }) {
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
 
   const { user } = useUser();
-  const { teams } = useTasks();
+  const { data } = useTasks();
+  const { teams } = data;
 
   const isTeamLead = useMemo(() => {
     if (!user) return false;
@@ -299,7 +338,8 @@ function FilteredTaskView({ tasks }: { tasks: Task[] }) {
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const { organizations, teams } = useTasks();
+  const { data } = useTasks();
+  const { organizations, teams } = data;
   
   if (!user) return <p>Loading...</p>;
   

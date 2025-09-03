@@ -26,16 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { format, isPast } from 'date-fns';
 import { useUser } from '@/context/user-context';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { TicketForm } from './ticket-form';
-import { TaskForm } from './task-form';
-
 
 interface TaskCardProps {
   task: Task;
@@ -56,9 +46,9 @@ const statusIcons: Record<TaskStatus, React.ReactNode> = {
 };
 
 export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCardProps) {
-  const { deleteTask, users, teams, projects } = useTasks();
+  const { deleteTask, data } = useTasks();
+  const { users, teams, projects } = data;
   const { user } = useUser();
-  const [isTicketSheetOpen, setTicketSheetOpen] = useState(false);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('taskId', task.id);

@@ -12,16 +12,42 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useRouter } from 'next/navigation';
+import { useUser } from '@/context/user-context';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { handleSignIn } from '@/lib/auth-actions';
+
+const formSchema = z.object({
+  email: z.string().min(1, { message: "Organization ID is required." }),
+  password: z.string().min(1, { message: "Password is required." }),
+});
 
 export default function SignInPage() {
-  const router = useRouter();
+  const { login } = useUser();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // In a real app, you'd handle authentication here.
-    // For this demo, we'll just navigate to the dashboard.
-    router.push('/dashboard');
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const result = await handleSignIn(values);
+    if (result.success && result.user) {
+        login(result.user);
+    } else {
+        toast({
+            title: 'Sign In Failed',
+            description: result.error,
+            variant: 'destructive',
+        });
+    }
   };
 
   return (
@@ -33,29 +59,44 @@ export default function SignInPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Organization ID</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="user.name@acmeinc"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+             <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Organization ID</FormLabel>
+                    <FormControl>
+                        <Input placeholder="user.name@acmeinc" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
-          </div>
-          <div className="grid gap-2">
-            <div className="flex items-center">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="ml-auto inline-block text-sm underline">
-                Forgot your password?
-              </Link>
-            </div>
-            <Input id="password" type="password" placeholder="any password" required />
-          </div>
-          <Button type="submit" className="w-full">
-            Login
-          </Button>
-        </form>
+             <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                    <FormItem>
+                        <div className="flex items-center">
+                            <FormLabel>Password</FormLabel>
+                            <Link href="/forgot-password" className="ml-auto inline-block text-sm underline">
+                                Forgot your password?
+                            </Link>
+                        </div>
+                        <FormControl>
+                            <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </Form>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="underline">

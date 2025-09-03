@@ -30,7 +30,8 @@ import {
 
 export default function ProjectsPage() {
     const { user } = useUser();
-    const { projects, teams, users, deleteProject } = useTasks();
+    const { data, deleteProject } = useTasks();
+    const { projects, teams } = data;
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | undefined>(undefined);
 

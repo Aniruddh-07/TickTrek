@@ -35,7 +35,7 @@ export default function SupportPage() {
     resolver: zodResolver(feedbackFormSchema),
     defaultValues: {
       name: user?.name || '',
-      email: user ? `${user.name.toLowerCase().replace(' ', '.')}@example.com` : '',
+      email: user?.email || '',
       reportType: 'bug',
       subject: '',
       message: '',
@@ -51,9 +51,8 @@ export default function SupportPage() {
             description: 'Thank you for your feedback! We have received your message.',
         });
         form.reset();
-        // re-populate name and email after reset
         form.setValue('name', user?.name || '');
-        form.setValue('email', user ? `${user.name.toLowerCase().replace(' ', '.')}@example.com` : '');
+        form.setValue('email', user?.email || '');
     } else {
         toast({
             title: 'Submission Failed',

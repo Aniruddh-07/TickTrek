@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,7 +36,8 @@ interface TeamFormProps {
 }
 
 export function TeamForm({ initialData, onClose }: TeamFormProps) {
-  const { addTeam, updateTeam, users } = useTasks();
+  const { addTeam, updateTeam, data } = useTasks();
+  const { users } = data;
   const allMembers = users.filter(u => u.role === 'member');
 
   const defaultValues: Partial<TeamFormValues> = initialData

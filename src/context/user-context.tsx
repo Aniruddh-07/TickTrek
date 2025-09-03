@@ -3,46 +3,60 @@
 
 import { createContext, useContext, useState, useMemo, type ReactNode, useCallback, useEffect } from 'react';
 import type { User } from '@/lib/types';
-import { useTasks } from './tasks-context';
+import { useRouter } from 'next/navigation';
 
 interface UserContextType {
   user: User | null;
-  users: User[];
-  setUser: (user: User) => void;
+  isLoading: boolean;
+  login: (user: User) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const { users: allUsers } = useTasks();
-  const [user, setUserState] = useState<User | null>(allUsers.find(u => u.role === 'admin') || null);
-  
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
   useEffect(() => {
-    if(user){
-      const updatedUser = allUsers.find(u => u.id === user.id);
-      if(updatedUser){
-        setUserState(updatedUser);
-      } else {
-        setUserState(allUsers.find(u => u.role === 'admin') || null)
+    // Check for user in local storage to persist session
+    try {
+      const storedUser = localStorage.getItem('ticktrek_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
+    } catch (error) {
+        console.error("Failed to parse user from local storage", error);
+        localStorage.removeItem('ticktrek_user');
     }
-  }, [allUsers, user]);
+    setIsLoading(false);
+  }, []);
 
-
-  const handleSetUser = useCallback((newUser: User) => {
-    const userInState = allUsers.find(u => u.id === newUser.id);
-    if (userInState) {
-        setUserState(userInState);
+  const login = useCallback((loggedInUser: User) => {
+    localStorage.setItem('ticktrek_user', JSON.stringify(loggedInUser));
+    setUser(loggedInUser);
+    if(loggedInUser.status === 'pending-approval'){
+        router.push('/awaiting-approval');
+    } else {
+        router.push('/dashboard');
     }
-  }, [allUsers]);
+  }, [router]);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('ticktrek_user');
+    setUser(null);
+    router.push('/signin');
+  }, [router]);
 
   const value = useMemo(
     () => ({
       user,
-      users: allUsers,
-      setUser: handleSetUser,
+      isLoading,
+      login,
+      logout,
     }),
-    [user, allUsers, handleSetUser]
+    [user, isLoading, login, logout]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

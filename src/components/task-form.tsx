@@ -52,7 +52,8 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ initialData, onClose }: TaskFormProps) {
-  const { addTask, updateTask, projects, teams, users } = useTasks();
+  const { addTask, updateTask, data } = useTasks();
+  const { projects, teams, users } = data;
   const { user } = useUser();
   const isEditing = 'id' in (initialData || {});
   

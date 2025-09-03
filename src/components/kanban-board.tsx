@@ -70,7 +70,8 @@ function KanbanColumn({ status, tasks, onDrop, onTaskClick }: KanbanColumnProps)
 }
 
 export default function KanbanBoard({tasks}: {tasks: Task[]}) {
-  const { updateTask, teams, projects } = useTasks();
+  const { updateTask, data } = useTasks();
+  const { teams, projects } = data;
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isSheetOpen, setIsSheetOpen] = useState(false);

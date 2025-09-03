@@ -36,7 +36,8 @@ const initialNotifications: NotificationState = {
 export function NotificationsProvider({ children }: { children: ReactNode }) {
     const [notifications, setNotifications] = useState<NotificationState>(initialNotifications);
     const { user } = useUser();
-    const { tasks, projects, teams, tickets, lastUpdated } = useTasks();
+    const { data, lastUpdated } = useTasks();
+    const { tasks, projects, teams, tickets } = data;
 
     const getLocalStorageKey = useCallback(() => {
         if (!user) return null;
@@ -49,8 +50,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const key = getLocalStorageKey();
         if (!key) return;
 
-        const storedData = localStorage.getItem(key);
-        const lastSeenData = storedData ? JSON.parse(storedData) : {
+        const storedDataRaw = localStorage.getItem(key);
+        const lastSeenData = storedDataRaw ? JSON.parse(storedDataRaw) : {
             tasks: [],
             projects: [],
             teams: [],

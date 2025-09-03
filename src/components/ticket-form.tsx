@@ -31,7 +31,8 @@ interface TicketFormProps {
 
 export function TicketForm({ onClose }: TicketFormProps) {
     const { user } = useUser();
-    const { users, raiseTicket, teams, projects } = useTasks();
+    const { data, raiseTicket } = useTasks();
+    const { users, teams, projects } = data;
 
     const form = useForm<TicketFormValues>({
         resolver: zodResolver(ticketFormSchema),

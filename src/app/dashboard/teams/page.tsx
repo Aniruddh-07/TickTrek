@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -30,7 +31,8 @@ import {
 
 export default function TeamsPage() {
     const { user } = useUser();
-    const { teams, users, deleteTeam } = useTasks();
+    const { data, deleteTeam } = useTasks();
+    const { teams, users } = data;
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<Team | undefined>(undefined);
 

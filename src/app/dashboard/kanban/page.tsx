@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function KanbanPage() {
   const { user } = useUser();
-  const { tasks, projects, teams } = useTasks();
+  const { data } = useTasks();
+  const { tasks, projects, teams } = data;
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
 
   const { boardTitle, boardDescription, displayTasks, availableProjects } = useMemo(() => {

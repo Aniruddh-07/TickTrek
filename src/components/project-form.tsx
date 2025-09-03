@@ -35,7 +35,8 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
-  const { addProject, updateProject, teams } = useTasks();
+  const { addProject, updateProject, data } = useTasks();
+  const { teams } = data;
   
   const defaultValues: Partial<ProjectFormValues> = initialData
     ? {
@@ -123,7 +124,7 @@ export function ProjectForm({ initialData, onClose }: ProjectFormProps) {
                               checked={field.value?.includes(team.id)}
                               onCheckedChange={(checked) => {
                                 return checked
-                                  ? field.onChange([...field.value, team.id])
+                                  ? field.onChange([...(field.value || []), team.id])
                                   : field.onChange(
                                       field.value?.filter(
                                         (value) => value !== team.id

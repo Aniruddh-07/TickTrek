@@ -17,8 +17,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import {
   LayoutGrid,
@@ -83,15 +81,22 @@ const MobileNavLink = ({ href, children }: { href: string; children: React.React
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, users, setUser } = useUser();
-  const { teams } = useTasks();
+  const { user, logout, isLoading: isUserLoading } = useUser();
+  const { data, isLoading: isDataLoading } = useTasks();
+  const { teams } = data;
   const { notifications } = useNotifications();
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/signin');
+    }
+  }, [isUserLoading, user, router]);
+  
   const isTeamLead = useMemo(() => {
     if (!user) return false;
     return teams.some(team => team.leadId === user.id);
   }, [user, teams]);
-
+  
   const isAssignedToTeam = useMemo(() => {
     if (!user) return false;
     if (user.role === 'admin') return true;
@@ -99,8 +104,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }, [user, teams]);
 
   useEffect(() => {
-    if (user && !isAssignedToTeam) {
-      router.push('/awaiting-assignment');
+    if (user && user.status === 'pending-approval') {
+        router.push('/awaiting-approval');
+    } else if (user && user.status === 'active' && !isAssignedToTeam) {
+        router.push('/awaiting-assignment');
     }
   }, [user, isAssignedToTeam, router]);
 
@@ -126,7 +133,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     { href: '/dashboard/support', icon: LifeBuoy, label: 'Support', notificationKey: 'support' },
   ];
   
-  if (!user || !isAssignedToTeam) {
+  if (isUserLoading || isDataLoading || !user || (user.status === 'active' && !isAssignedToTeam)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Loading...</p>
@@ -135,7 +142,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   const roleDisplay = user.role === 'admin' ? 'Admin' : (isTeamLead ? 'Team Lead' : 'Member');
-  const activeUsers = users.filter(u => u.status === 'active');
 
   return (
     <div className="min-h-screen w-full">
@@ -238,17 +244,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account ({roleDisplay})</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel>Switch User</DropdownMenuLabel>
-               <DropdownMenuRadioGroup value={user.id} onValueChange={(id) => setUser(users.find(u => u.id === id)!)}>
-                {activeUsers.map(u => (
-                  <DropdownMenuRadioItem key={u.id} value={u.id}>{u.name} ({u.role})</DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-              <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/dashboard/settings">Settings</Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/dashboard/support">Support</Link></DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild><Link href="/">Logout</Link></DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
@@ -263,12 +262,12 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <TasksProvider>
-      <UserProvider>
-        <NotificationsProvider>
-          <DashboardLayoutContent>{children}</DashboardLayoutContent>
-        </NotificationsProvider>
-      </UserProvider>
-    </TasksProvider>
+    <UserProvider>
+        <TasksProvider>
+            <NotificationsProvider>
+            <DashboardLayoutContent>{children}</DashboardLayoutContent>
+            </NotificationsProvider>
+        </TasksProvider>
+    </UserProvider>
   );
 }

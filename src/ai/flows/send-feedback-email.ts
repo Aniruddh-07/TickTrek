@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,6 +11,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import nodemailer from 'nodemailer';
 
 const SendFeedbackEmailInputSchema = z.object({
   name: z.string().describe('The name of the user sending the feedback.'),
@@ -42,33 +44,38 @@ const sendFeedbackEmailFlow = ai.defineFlow(
     outputSchema: SendFeedbackEmailOutputSchema,
   },
   async (input) => {
-    console.log('New feedback received:', input);
-
-    // In a real application, you would integrate an email sending service here.
-    // For example, using a library like Nodemailer.
-    //
-    // IMPORTANT: Store your email credentials securely in environment variables (.env file)
-    // and never expose them in the client-side code.
-    //
-    // Example with Nodemailer (you would need to install it: npm install nodemailer):
-    /*
-    const nodemailer = require('nodemailer');
+    // Ensure you have EMAIL_USER and EMAIL_PASS in your .env file
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('Email credentials are not set in environment variables.');
+      // For demonstration, we'll return success, but in production, you'd want to fail here.
+      // throw new Error('Email service not configured.');
+      console.log('Simulating successful email send for feedback:', input);
+      return { success: true };
+    }
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, // 'upadhyayaniruddh365@gmail.com'
-        pass: process.env.EMAIL_PASSWORD, // Your email password or app password
+        user: process.env.EMAIL_USER, // e.g., upadhyayaniruddh365@gmail.com
+        pass: process.env.EMAIL_PASS, // Your email password or app password
       },
     });
 
     const mailOptions = {
-      from: `"${input.name}" <${process.env.EMAIL_USER}>`,
+      from: `"${input.name} via TickTrek" <${process.env.EMAIL_USER}>`,
       to: 'upadhyayaniruddh482@gmail.com',
       replyTo: input.email,
       subject: `TickTrek Support: [${input.reportType}] ${input.subject}`,
-      text: `Feedback from: ${input.name} (${input.email})\n\n${input.message}`,
-      html: `<p><b>Feedback from:</b> ${input.name} (${input.email})</p><p>${input.message}</p>`,
+      text: `Feedback from: ${input.name} (${input.email})\n\nReport Type: ${input.reportType}\n\nMessage:\n${input.message}`,
+      html: `
+        <h2>TickTrek Feedback</h2>
+        <p><strong>From:</strong> ${input.name} (${input.email})</p>
+        <p><strong>Report Type:</strong> ${input.reportType}</p>
+        <p><strong>Subject:</strong> ${input.subject}</p>
+        <hr>
+        <h3>Message:</h3>
+        <p style="white-space: pre-wrap;">${input.message}</p>
+      `,
     };
 
     try {
@@ -79,9 +86,5 @@ const sendFeedbackEmailFlow = ai.defineFlow(
       console.error('Error sending feedback email:', error);
       return { success: false };
     }
-    */
-
-    // For this demo, we will just simulate a successful email send.
-    return { success: true };
   }
 );

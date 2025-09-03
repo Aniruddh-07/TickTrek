@@ -10,15 +10,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useTheme } from 'next-themes';
 import { useUser } from '@/context/user-context';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSaveChanges = () => {
+    // In a real app, this would call an API to update user data.
+    toast({
+      title: "Changes Saved",
+      description: "Your profile information has been updated.",
+    });
+  }
 
   if (!mounted || !user) {
     return null; // or a loading skeleton
@@ -43,9 +53,9 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" defaultValue={`${user.name.toLowerCase().replace(' ', '.')}@example.com`} disabled />
+            <Input id="email" type="email" defaultValue={user.email} disabled />
           </div>
-          <Button>Save Changes</Button>
+          <Button onClick={handleSaveChanges}>Save Changes</Button>
         </CardContent>
       </Card>
       

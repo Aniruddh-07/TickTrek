@@ -25,7 +25,8 @@ const priorityClasses: Record<TaskPriority, string> = {
 
 export default function TicketsPage() {
   const { user } = useUser();
-  const { tickets, updateTicketStatus, addTicketReply, users, projects } = useTasks();
+  const { data, updateTicketStatus, addTicketReply } = useTasks();
+  const { tickets, users, projects } = data;
   const [isTicketSheetOpen, setIsTicketSheetOpen] = useState(false);
   const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
   const [taskPrefillData, setTaskPrefillData] = useState<Partial<NewTask> | undefined>(undefined);

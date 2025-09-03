@@ -14,36 +14,48 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/context/user-context';
+import { handleSignUp } from '@/lib/auth-actions';
 
 type SignUpMode = 'create' | 'join';
 
 export default function SignUpPage() {
-  const router = useRouter();
+  const { login } = useUser();
   const { toast } = useToast();
   const [mode, setMode] = useState<SignUpMode>('create');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, this would involve API calls.
-    // For now, we just simulate the flow.
-    if (mode === 'create') {
-      toast({
-        title: 'Organization Created!',
-        description: "You're now an admin. Let's get you to the dashboard.",
-      });
-      // In a real app, you'd log the user in as an admin here.
-      router.push('/dashboard');
+    setIsSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    const values = Object.fromEntries(formData.entries());
+
+    const result = await handleSignUp({
+      mode,
+      orgName: values['org-name'] as string,
+      orgId: values['org-id'] as string,
+      fullName: values['full-name'] as string,
+      email: values.email as string,
+      password: values.password as string,
+    });
+
+    if (result.success && result.user) {
+        toast({
+            title: result.mode === 'create' ? 'Organization Created!' : 'Account Created!',
+            description: result.message,
+        });
+        login(result.user);
     } else {
-      toast({
-        title: 'Account Created!',
-        description:
-          "You have successfully joined the organization. You'll be redirected to login.",
-      });
-      // Redirect to a page that informs the user to wait for approval.
-      router.push('/signin');
+        toast({
+            title: 'Sign Up Failed',
+            description: result.error,
+            variant: 'destructive',
+        });
     }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -85,26 +97,27 @@ export default function SignUpPage() {
           {mode === 'create' && (
             <div className="grid gap-2">
               <Label htmlFor="org-name">Organization Name</Label>
-              <Input id="org-name" placeholder="Acme Inc." required />
+              <Input id="org-name" name="org-name" placeholder="Acme Inc." required />
             </div>
           )}
 
           {mode === 'join' && (
             <div className="grid gap-2">
-              <Label htmlFor="org-id">Organization Invitation Link or ID</Label>
-              <Input id="org-id" placeholder="Enter the ID or link you received" required />
+              <Label htmlFor="org-id">Organization ID</Label>
+              <Input id="org-id" name="org-id" placeholder="Enter the organization ID" required />
             </div>
           )}
 
           <div className="grid gap-2">
             <Label htmlFor="full-name">Your Name</Label>
-            <Input id="full-name" placeholder="John Doe" required />
+            <Input id="full-name" name="full-name" placeholder="John Doe" required />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
+              name="email"
               type="email"
               placeholder="test@example.com"
               required
@@ -113,11 +126,11 @@ export default function SignUpPage() {
 
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="password" required />
+            <Input id="password" name="password" type="password" required />
           </div>
 
-          <Button type="submit" className="w-full">
-            {mode === 'create' ? 'Create and Sign Up' : 'Join and Sign Up'}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : (mode === 'create' ? 'Create and Sign Up' : 'Join and Sign Up')}
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">
