@@ -6,13 +6,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTasks } from '@/context/tasks-context';
 import { useUser } from '@/context/user-context';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Textarea } from './ui/textarea';
-import { Button } from './ui/button';
-import type { NewTicket, Task, User } from '@/lib/types';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import type { NewTicket } from '@/lib/types';
 import { useMemo } from 'react';
-import { Input } from './ui/input';
+import { Input } from '@/components/ui/input';
 import { TASK_PRIORITIES } from '@/lib/types';
 
 const ticketFormSchema = z.object({
@@ -43,6 +43,8 @@ export function TicketForm({ onClose }: TicketFormProps) {
             priority: 'medium',
         }
     });
+    
+    const selectedProjectId = form.watch('projectId');
 
     const onSubmit = (data: TicketFormValues) => {
         if (!user) return;
@@ -54,26 +56,6 @@ export function TicketForm({ onClose }: TicketFormProps) {
         raiseTicket(newTicket);
         onClose();
     };
-
-    const assignableUsers = useMemo(() => {
-        if (!user) return [];
-        
-        if (user.role === 'admin') {
-            // Admin can raise tickets to Team Leads
-            const teamLeadIds = new Set(teams.map(t => t.leadId));
-            return users.filter(u => teamLeadIds.has(u.id));
-        } else {
-            // Members can raise tickets to anyone in their team(s)
-            const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
-            const myTeamMembers = new Set<string>();
-            teams.forEach(team => {
-                if (myTeamIds.includes(team.id)) {
-                    team.memberIds.forEach(memberId => myTeamMembers.add(memberId));
-                }
-            });
-            return users.filter(u => myTeamMembers.has(u.id) && u.id !== user.id);
-        }
-    }, [users, teams, user]);
     
     const availableProjects = useMemo(() => {
         if (!user) return [];
@@ -83,6 +65,35 @@ export function TicketForm({ onClose }: TicketFormProps) {
         return projects.filter(p => p.teamIds.some(teamId => myTeamIds.includes(teamId)));
 
     }, [user, projects, teams]);
+
+    const assignableUsers = useMemo(() => {
+        if (!user) return [];
+
+        // Project-based filtering
+        if (selectedProjectId && selectedProjectId !== 'none') {
+            const project = projects.find(p => p.id === selectedProjectId);
+            if (project) {
+                const projectTeams = teams.filter(t => project.teamIds.includes(t.id));
+                const memberIds = new Set(projectTeams.flatMap(t => t.memberIds));
+                return users.filter(u => memberIds.has(u.id) && u.id !== user.id);
+            }
+        }
+
+        // Default role-based filtering
+        if (user.role === 'admin') {
+            const teamLeadIds = new Set(teams.map(t => t.leadId));
+            return users.filter(u => teamLeadIds.has(u.id) && u.id !== user.id);
+        } else {
+            const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
+            const myTeamMembers = new Set<string>();
+            teams.forEach(team => {
+                if (myTeamIds.includes(team.id)) {
+                    team.memberIds.forEach(memberId => myTeamMembers.add(memberId));
+                }
+            });
+            return users.filter(u => myTeamMembers.has(u.id) && u.id !== user.id);
+        }
+    }, [user, users, teams, projects, selectedProjectId]);
 
 
     return (
@@ -120,6 +131,37 @@ export function TicketForm({ onClose }: TicketFormProps) {
                         </FormItem>
                     )}
                 />
+                 <FormField
+                    control={form.control}
+                    name="projectId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Related Project (Optional)</FormLabel>
+                            <Select 
+                                onValueChange={(value) => {
+                                    field.onChange(value);
+                                    form.setValue('assigneeId', '');
+                                }} 
+                                defaultValue={field.value}
+                            >
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a project to see its members" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="none">None (Show my team members)</SelectItem>
+                                    {availableProjects.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>
+                                            {p.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <FormField
@@ -128,7 +170,7 @@ export function TicketForm({ onClose }: TicketFormProps) {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Assign To</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a person" />
@@ -136,7 +178,8 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                     </FormControl>
                                     <SelectContent>
                                         {assignableUsers.map(u => {
-                                            const role = teams.some(t => t.leadId === u.id) ? 'Lead' : 'Member'
+                                            const isLead = teams.some(t => t.leadId === u.id);
+                                            const role = user?.role === 'admin' ? 'Lead' : (isLead ? 'Lead' : 'Member');
                                             return (
                                                 <SelectItem key={u.id} value={u.id}>
                                                     {u.name} ({role})
@@ -159,14 +202,14 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select priority" />
-                                    </SelectTrigger>
+                                    </Trigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {TASK_PRIORITIES.map((priority) => (
-                                            <SelectItem key={priority} value={priority} className='capitalize'>
-                                            {priority}
-                                            </SelectItem>
-                                        ))}
+                                    {TASK_PRIORITIES.map((priority) => (
+                                        <SelectItem key={priority} value={priority} className='capitalize'>
+                                        {priority}
+                                        </SelectItem>
+                                    ))}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -174,37 +217,12 @@ export function TicketForm({ onClose }: TicketFormProps) {
                         )}
                     />
                 </div>
-                 <FormField
-                    control={form.control}
-                    name="projectId"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Related Project (Optional)</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a project" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="none">None</SelectItem>
-                                    {availableProjects.map(p => (
-                                        <SelectItem key={p.id} value={p.id}>
-                                            {p.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-               
+
                 <div className="flex justify-end gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">Submit Ticket</Button>
+                    <Button type="submit">Create Ticket</Button>
                 </div>
             </form>
         </Form>
-    )
+    );
 }
