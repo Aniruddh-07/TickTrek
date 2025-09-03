@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,15 @@ import { useUser } from '@/context/user-context';
 export default function SettingsPage() {
   const { user } = useUser();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !user) {
+    return null; // or a loading skeleton
+  }
 
   return (
     <div className="space-y-6">
@@ -29,11 +39,11 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" defaultValue={user?.name} />
+            <Input id="name" defaultValue={user.name} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" defaultValue={`${user?.name.toLowerCase().replace(' ', '.')}@example.com`} disabled />
+            <Input id="email" type="email" defaultValue={`${user.name.toLowerCase().replace(' ', '.')}@example.com`} disabled />
           </div>
           <Button>Save Changes</Button>
         </CardContent>
