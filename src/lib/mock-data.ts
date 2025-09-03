@@ -1,13 +1,18 @@
 
 
-import type { Task, User, Project, Team, Ticket } from './types';
+import type { Task, User, Project, Team, Ticket, Organization } from './types';
+
+export const MOCK_ORGANIZATIONS: Organization[] = [
+    { id: 'org-1', name: 'TickTrek Inc.' },
+];
 
 export const MOCK_USERS: User[] = [
-  { id: 'user-1', name: 'Admin User', role: 'admin', avatar: 'https://picsum.photos/seed/admin/50' },
-  { id: 'user-2', name: 'Tina Member', role: 'member', avatar: 'https://picsum.photos/seed/tina/50' },
-  { id: 'user-3', name: 'Mike Member', role: 'member', avatar: 'https://picsum.photos/seed/mike/50' },
-  { id: 'user-4', name: 'Mary Member', role: 'member', avatar: 'https://picsum.photos/seed/mary/50' },
-  { id: 'user-5', name: 'Larry Member', role: 'member', avatar: 'https://picsum.photos/seed/larry/50' },
+  { id: 'user-1', name: 'Admin User', role: 'admin', avatar: 'https://picsum.photos/seed/admin/50', organizationId: 'org-1', status: 'active' },
+  { id: 'user-2', name: 'Tina Member', role: 'member', avatar: 'https://picsum.photos/seed/tina/50', organizationId: 'org-1', status: 'active' },
+  { id: 'user-3', name: 'Mike Member', role: 'member', avatar: 'https://picsum.photos/seed/mike/50', organizationId: 'org-1', status: 'active' },
+  { id: 'user-4', name: 'Mary Member', role: 'member', avatar: 'https://picsum.photos/seed/mary/50', organizationId: 'org-1', status: 'active' },
+  { id: 'user-5', name: 'Larry Member', role: 'member', avatar: 'https://picsum.photos/seed/larry/50', organizationId: 'org-1', status: 'active' },
+  { id: 'user-6', name: 'Penny Pending', role: 'member', avatar: 'https://picsum.photos/seed/penny/50', organizationId: 'org-1', status: 'pending-approval' },
 ];
 
 export const MOCK_TEAMS: Team[] = [

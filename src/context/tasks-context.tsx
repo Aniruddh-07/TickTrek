@@ -3,8 +3,8 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { MOCK_TASKS, MOCK_TICKETS, MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS } from '@/lib/mock-data';
-import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam, TicketReply, NewTicket } from '@/lib/types';
+import { MOCK_TASKS, MOCK_TICKETS, MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS, MOCK_ORGANIZATIONS } from '@/lib/mock-data';
+import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam, TicketReply, NewTicket, Organization } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface TasksContextType {
@@ -13,6 +13,7 @@ interface TasksContextType {
   projects: Project[];
   teams: Team[];
   users: User[];
+  organizations: Organization[];
   lastUpdated: number;
   addTask: (task: NewTask) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
@@ -28,6 +29,8 @@ interface TasksContextType {
   updateTeam: (teamId: string, updates: NewTeam) => void;
   deleteTeam: (teamId: string) => void;
   getProjectTeamLead: (projectId: string) => User | undefined;
+  approveUser: (userId: string) => void;
+  denyUser: (userId: string) => void;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
@@ -37,6 +40,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
   const [tickets, setTickets] = useState<Ticket[]>(MOCK_TICKETS);
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
   const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [organizations, setOrganizations] = useState<Organization[]>(MOCK_ORGANIZATIONS);
   const [lastUpdated, setLastUpdated] = useState(Date.now());
 
   const { toast } = useToast();
@@ -189,8 +194,21 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     if (!project || !project.teamIds.length) return undefined;
     const team = teams.find(t => t.id === project.teamIds[0]);
     if (!team) return undefined;
-    return MOCK_USERS.find(u => u.id === team.leadId);
-  }, [projects, teams]);
+    return users.find(u => u.id === team.leadId);
+  }, [projects, teams, users]);
+
+  const approveUser = useCallback((userId: string) => {
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: 'active' } : u));
+    triggerUpdate();
+    toast({ title: "User Approved", description: "The user is now an active member." });
+  }, [toast]);
+
+  const denyUser = useCallback((userId: string) => {
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    triggerUpdate();
+    toast({ title: "User Denied", variant: 'destructive', description: "The user's request has been denied." });
+  }, [toast]);
+
 
   const value = useMemo(
     () => ({
@@ -198,7 +216,8 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       tickets,
       projects,
       teams,
-      users: MOCK_USERS,
+      users,
+      organizations,
       lastUpdated,
       addTask,
       updateTask,
@@ -214,8 +233,10 @@ export function TasksProvider({ children }: { children: ReactNode }) {
       updateTeam,
       deleteTeam,
       getProjectTeamLead,
+      approveUser,
+      denyUser,
     }),
-    [tasks, tickets, projects, teams, lastUpdated, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam, getProjectTeamLead]
+    [tasks, tickets, projects, teams, users, organizations, lastUpdated, addTask, updateTask, deleteTask, getTaskById, raiseTicket, updateTicketStatus, addTicketReply, addProject, updateProject, deleteProject, addTeam, updateTeam, deleteTeam, getProjectTeamLead, approveUser, denyUser]
   );
 
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;

@@ -1,18 +1,28 @@
 
 
+
 export const TASK_STATUSES = ['pending', 'in-progress', 'completed'] as const;
 export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const;
 export const USER_ROLES = ['admin', 'member'] as const;
+export const USER_STATUSES = ['active', 'pending-approval'] as const;
 
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 export type UserRole = (typeof USER_ROLES)[number];
+export type UserStatus = (typeof USER_STATUSES)[number];
+
+export interface Organization {
+  id: string;
+  name: string;
+}
 
 export interface User {
   id: string;
   name: string;
   role: UserRole;
   avatar: string;
+  organizationId: string;
+  status: UserStatus;
 }
 
 export interface Team {
@@ -65,4 +75,3 @@ export type NewTask = Omit<Task, 'id'>;
 export type NewProject = Omit<Project, 'id'>;
 export type NewTeam = Omit<Team, 'id'>;
 export type NewTicket = Omit<Ticket, 'id' | 'status' | 'replies' | 'createdAt'>;
-

@@ -1,8 +1,9 @@
+
 'use client';
 
-import { createContext, useContext, useState, useMemo, type ReactNode, useCallback } from 'react';
-import type { User, UserRole } from '@/lib/types';
-import { MOCK_USERS } from '@/lib/mock-data';
+import { createContext, useContext, useState, useMemo, type ReactNode, useCallback, useEffect } from 'react';
+import type { User } from '@/lib/types';
+import { useTasks } from './tasks-context';
 
 interface UserContextType {
   user: User | null;
@@ -13,25 +14,37 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [users] = useState<User[]>(MOCK_USERS);
-  // Default to the admin user for demo purposes
-  const [user, setUser] = useState<User | null>(users[0]);
+  const { users: allUsers } = useTasks();
+  const [user, setUserState] = useState<User | null>(allUsers.find(u => u.role === 'admin') || null);
   
-  const handleSetUser = useCallback((newUser: User) => {
-    const userInState = users.find(u => u.id === newUser.id);
-    if (userInState) {
-        setUser(userInState);
+  useEffect(() => {
+    // If the currently selected user gets updated (e.g. approved), refresh their state
+    if(user){
+      const updatedUser = allUsers.find(u => u.id === user.id);
+      if(updatedUser){
+        setUserState(updatedUser);
+      } else {
+        // Current user was deleted (denied), switch to admin
+        setUserState(allUsers.find(u => u.role === 'admin') || null)
+      }
     }
-  }, [users]);
+  }, [allUsers, user]);
 
+
+  const handleSetUser = useCallback((newUser: User) => {
+    const userInState = allUsers.find(u => u.id === newUser.id);
+    if (userInState) {
+        setUserState(userInState);
+    }
+  }, [allUsers]);
 
   const value = useMemo(
     () => ({
       user,
-      users,
+      users: allUsers,
       setUser: handleSetUser,
     }),
-    [user, users, handleSetUser]
+    [user, allUsers, handleSetUser]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

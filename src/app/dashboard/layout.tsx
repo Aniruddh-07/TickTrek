@@ -2,8 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import React, { useMemo } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import React, { useMemo, useEffect } from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -82,10 +82,16 @@ const MobileNavLink = ({ href, children }: { href: string; children: React.React
 
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const router = useRouter();
   const { user, users, setUser } = useUser();
   const { teams } = useTasks();
   const { notifications } = useNotifications();
+
+  useEffect(() => {
+    if (user && user.status === 'pending-approval') {
+      router.push('/awaiting-approval');
+    }
+  }, [user, router]);
 
   const isTeamLead = useMemo(() => {
     if (!user) return false;
@@ -114,15 +120,16 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     { href: '/dashboard/support', icon: LifeBuoy, label: 'Support', notificationKey: 'support' },
   ];
   
-  if (!user) {
+  if (!user || user.status === 'pending-approval') {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p>Loading user data...</p>
+        <p>Loading...</p>
       </div>
     );
   }
 
   const roleDisplay = user.role === 'admin' ? 'Admin' : (isTeamLead ? 'Team Lead' : 'Member');
+  const activeUsers = users.filter(u => u.status === 'active');
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -227,7 +234,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Switch User</DropdownMenuLabel>
                <DropdownMenuRadioGroup value={user.id} onValueChange={(id) => setUser(users.find(u => u.id === id)!)}>
-                {users.map(u => (
+                {activeUsers.map(u => (
                   <DropdownMenuRadioItem key={u.id} value={u.id}>{u.name} ({u.role})</DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
