@@ -1,14 +1,14 @@
 'use server';
 
 /**
- * @fileOverview Generates a set of website routes using AI.
+ * @fileOverview Generates a set of website routes.
  *
  * - generateRoutes - A function that generates website routes.
  * - GenerateRoutesInput - The input type for the generateRoutes function.
  * - GenerateRoutesOutput - The return type for the generateRoutes function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from '@/server/genkit';
 import {z} from 'genkit';
 
 const GenerateRoutesInputSchema = z.object({

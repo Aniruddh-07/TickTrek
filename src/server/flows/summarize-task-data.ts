@@ -1,13 +1,13 @@
 'use server';
 /**
- * @fileOverview A task data summarization AI agent.
+ * @fileOverview A task data summarization agent.
  *
  * - summarizeTaskData - A function that handles the task data summarization process.
  * - SummarizeTaskDataInput - The input type for the summarizeTaskData function.
  * - SummarizeTaskDataOutput - The return type for the summarizeTaskData function.
  */
 
-import {ai} from '@/ai/genkit';
+import {ai} from '@/server/genkit';
 import {z} from 'genkit';
 
 const SummarizeTaskDataInputSchema = z.object({

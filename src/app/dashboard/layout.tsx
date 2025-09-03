@@ -226,7 +226,6 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </Sheet>
 
           <div className="w-full flex-1">
-            {/* Optional: Header Search Bar */}
           </div>
 
           <ThemeSwitcher />
@@ -235,7 +234,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="secondary" size="icon" className="rounded-full">
                 <Avatar>
-                  <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="user avatar" />
+                  <AvatarImage src={user.avatar} alt={user.name} />
                   <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Toggle user menu</span>

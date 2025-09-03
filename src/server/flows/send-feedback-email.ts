@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -9,7 +8,7 @@
  * - SendFeedbackEmailOutput - The return type for the sendFeedbackEmail function.
  */
 
-import { ai } from '@/ai/genkit';
+import { ai } from '@/server/genkit';
 import { z } from 'genkit';
 import nodemailer from 'nodemailer';
 

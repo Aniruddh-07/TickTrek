@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useUser } from '@/context/user-context';
-import { sendFeedbackEmail } from '@/ai/flows/send-feedback-email';
+import { sendFeedbackEmail } from '@/server/flows/send-feedback-email';
 
 
 const feedbackFormSchema = z.object({
@@ -153,8 +153,7 @@ export default function SupportPage() {
                     name="message"
                     render={({ field }) => (
                         <FormItem>
-                        <Label>Message</Label>
-                         <FormControl>
+                        <Label>Message</Label>                         <FormControl>
                             <Textarea
                                 id="message"
                                 placeholder="Please describe the issue or your suggestion in detail..."

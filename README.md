@@ -67,7 +67,3 @@ TickTrek is built to be extended. Here are some features we're thinking about fo
 ## 💖 Show Your Support
 
 Did you find this project useful or interesting? Give it a ⭐️ to show your support! It helps motivate us to keep improving it. We're super friendly to beginners, so feel free to explore the code and learn from it.
-
----
-
-_This project was bootstrapped with Firebase Studio._

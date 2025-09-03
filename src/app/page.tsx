@@ -37,7 +37,6 @@ export default function LandingPage() {
             </Link>
           </div>
           <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-            {/* Future nav links can go here */}
           </nav>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <Button variant="ghost" asChild>
@@ -167,7 +166,7 @@ export default function LandingPage() {
                          <p className="text-muted-foreground italic mb-4">"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante dapibus diam."</p>
                          <div className="flex items-center gap-4">
                             <Avatar>
-                                <AvatarImage src={`https://picsum.photos/seed/user${index}/50/50`} data-ai-hint="user avatar" />
+                                <AvatarImage src={`https://picsum.photos/seed/user${index}/50/50`} />
                                 <AvatarFallback>{`U${index+1}`}</AvatarFallback>
                             </Avatar>
                             <div>
