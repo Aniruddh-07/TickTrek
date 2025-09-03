@@ -87,16 +87,22 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { teams } = useTasks();
   const { notifications } = useNotifications();
 
-  useEffect(() => {
-    if (user && user.status === 'pending-approval') {
-      router.push('/awaiting-approval');
-    }
-  }, [user, router]);
-
   const isTeamLead = useMemo(() => {
     if (!user) return false;
     return teams.some(team => team.leadId === user.id);
   }, [user, teams]);
+
+  const isAssignedToTeam = useMemo(() => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return teams.some(team => team.memberIds.includes(user.id));
+  }, [user, teams]);
+
+  useEffect(() => {
+    if (user && !isAssignedToTeam) {
+      router.push('/awaiting-assignment');
+    }
+  }, [user, isAssignedToTeam, router]);
 
   const navItemsByRole: Record<UserRole, { href: string; icon: React.ElementType; label: string, notificationKey: keyof typeof notifications }[]> = {
     admin: [
@@ -120,7 +126,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     { href: '/dashboard/support', icon: LifeBuoy, label: 'Support', notificationKey: 'support' },
   ];
   
-  if (!user || user.status === 'pending-approval') {
+  if (!user || !isAssignedToTeam) {
     return (
       <div className="flex items-center justify-center h-screen">
         <p>Loading...</p>

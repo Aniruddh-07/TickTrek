@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Check, X } from 'lucide-react';
+import { PlusCircle, Search } from 'lucide-react';
 import { useTasks } from '@/context/tasks-context';
 import TaskCard from '@/components/task-card';
 import { TaskForm } from '@/components/task-form';
@@ -27,17 +27,10 @@ import { TASK_PRIORITIES, TASK_STATUSES } from '@/lib/types';
 import { useUser } from '@/context/user-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 function AdminDashboard() {
-  const { tasks, projects, teams, users, approveUser, denyUser } = useTasks();
-  const { user: adminUser } = useUser();
-
-  const pendingUsers = useMemo(() => {
-    if (!adminUser) return [];
-    return users.filter(u => u.organizationId === adminUser.organizationId && u.status === 'pending-approval');
-  }, [users, adminUser]);
+  const { tasks, projects, teams } = useTasks();
 
   const teamProgress = useMemo(() => {
     return teams.map(team => {
@@ -71,85 +64,48 @@ function AdminDashboard() {
 
 
   return (
-    <>
-      {pendingUsers.length > 0 && (
+    <Card>
+      <CardHeader>
+        <CardTitle>Admin Overview</CardTitle>
+        <CardDescription>Real-time progress of teams and projects across the workspace.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Pending Approvals</CardTitle>
-            <CardDescription>The following users have requested to join your organization.</CardDescription>
+            <CardTitle>Team Progress</CardTitle>
+            <CardDescription>Percentage of completed tasks per team.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-4">
-              {pendingUsers.map(u => (
-                <li key={u.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarImage src={u.avatar} />
-                      <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{u.name}</p>
-                      <p className="text-sm text-muted-foreground">{u.name.toLowerCase().replace(' ', '.')}@example.com</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="icon" variant="outline" className="text-green-600" onClick={() => approveUser(u.id)}>
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button size="icon" variant="outline" className="text-red-600" onClick={() => denyUser(u.id)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={teamProgress}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis unit="%" />
+                <Tooltip />
+                <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Admin Overview</CardTitle>
-          <CardDescription>Real-time progress of teams and projects across the workspace.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Progress</CardTitle>
-              <CardDescription>Percentage of completed tasks per team.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={teamProgress}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis unit="%" />
-                  <Tooltip />
-                  <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Progress</CardTitle>
-              <CardDescription>Percentage of completed tasks per project.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={projectProgress}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis unit="%" />
-                  <Tooltip />
-                  <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </CardContent>
-      </Card>
-    </>
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Progress</CardTitle>
+            <CardDescription>Percentage of completed tasks per project.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={projectProgress}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis unit="%" />
+                <Tooltip />
+                <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </CardContent>
+    </Card>
   );
 }
 

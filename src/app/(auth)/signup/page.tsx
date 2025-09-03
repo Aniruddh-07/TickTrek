@@ -37,12 +37,12 @@ export default function SignUpPage() {
       router.push('/dashboard');
     } else {
       toast({
-        title: 'Request Sent!',
+        title: 'Account Created!',
         description:
-          "Your request to join has been sent to the organization's admin for approval.",
+          "You have successfully joined the organization. You'll be redirected to login.",
       });
       // Redirect to a page that informs the user to wait for approval.
-      router.push('/awaiting-approval');
+      router.push('/signin');
     }
   };
 
@@ -91,8 +91,8 @@ export default function SignUpPage() {
 
           {mode === 'join' && (
             <div className="grid gap-2">
-              <Label htmlFor="org-id">Organization ID</Label>
-              <Input id="org-id" placeholder="Enter the ID you received" required />
+              <Label htmlFor="org-id">Organization Invitation Link or ID</Label>
+              <Input id="org-id" placeholder="Enter the ID or link you received" required />
             </div>
           )}
 
@@ -117,7 +117,7 @@ export default function SignUpPage() {
           </div>
 
           <Button type="submit" className="w-full">
-            {mode === 'create' ? 'Create and Sign Up' : 'Request to Join'}
+            {mode === 'create' ? 'Create and Sign Up' : 'Join and Sign Up'}
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">

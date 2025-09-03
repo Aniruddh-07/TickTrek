@@ -18,13 +18,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(allUsers.find(u => u.role === 'admin') || null);
   
   useEffect(() => {
-    // If the currently selected user gets updated (e.g. approved), refresh their state
     if(user){
       const updatedUser = allUsers.find(u => u.id === user.id);
       if(updatedUser){
         setUserState(updatedUser);
       } else {
-        // Current user was deleted (denied), switch to admin
         setUserState(allUsers.find(u => u.role === 'admin') || null)
       }
     }

@@ -12,7 +12,7 @@ export const MOCK_USERS: User[] = [
   { id: 'user-3', name: 'Mike Member', role: 'member', avatar: 'https://picsum.photos/seed/mike/50', organizationId: 'org-1', status: 'active' },
   { id: 'user-4', name: 'Mary Member', role: 'member', avatar: 'https://picsum.photos/seed/mary/50', organizationId: 'org-1', status: 'active' },
   { id: 'user-5', name: 'Larry Member', role: 'member', avatar: 'https://picsum.photos/seed/larry/50', organizationId: 'org-1', status: 'active' },
-  { id: 'user-6', name: 'Penny Pending', role: 'member', avatar: 'https://picsum.photos/seed/penny/50', organizationId: 'org-1', status: 'pending-approval' },
+  { id: 'user-7', name: 'Nancy Newbie', role: 'member', avatar: 'https://picsum.photos/seed/nancy/50', organizationId: 'org-1', status: 'active' },
 ];
 
 export const MOCK_TEAMS: Team[] = [

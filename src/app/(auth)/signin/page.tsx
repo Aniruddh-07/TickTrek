@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -28,17 +29,17 @@ export default function SignInPage() {
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Sign In</CardTitle>
         <CardDescription>
-          Enter your email below to login to your account
+          Enter your organization-specific ID to login.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Organization ID</Label>
             <Input
               id="email"
               type="email"
-              placeholder="any@email.com"
+              placeholder="user.name@acmeinc"
               required
             />
           </div>
