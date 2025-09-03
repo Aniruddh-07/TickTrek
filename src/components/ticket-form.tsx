@@ -176,7 +176,7 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a person" />
-                                    </Trigger>
+                                    </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
                                         {assignableUsers.map(u => {
