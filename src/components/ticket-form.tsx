@@ -204,7 +204,7 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select priority" />
-                                    </Trigger>
+                                    </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
                                     {TASK_PRIORITIES.map((priority) => (
