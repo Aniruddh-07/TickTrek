@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
@@ -25,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useUser } from '@/context/user-context';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { TicketForm } from './ticket-form';
 import {
   Sheet,
   SheetContent,
@@ -33,6 +33,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { TicketForm } from './ticket-form';
 
 
 interface TaskCardProps {
@@ -64,15 +65,16 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
   
   const assignee = users.find(u => u.id === task.assigneeId);
 
-  const { canEditDelete, canRaiseTicket } = useMemo(() => {
-    if (!user) return { canEditDelete: false, canRaiseTicket: false };
+  const { canEditDelete } = useMemo(() => {
+    if (!user) return { canEditDelete: false };
     const project = projects.find(p => p.id === task.projectId);
-    const team = teams.find(t => t.id === project?.teamId);
-    const isLead = team?.leadId === user.id;
+    if (!project) return { canEditDelete: false };
+
+    const taskTeams = teams.filter(t => project.teamIds.includes(t.id));
+    const isLead = taskTeams.some(t => t.leadId === user.id);
 
     return {
         canEditDelete: user.role === 'admin' || isLead,
-        canRaiseTicket: task.assigneeId === user.id || user.id === team?.leadId || user.role === 'admin',
     }
   }, [user, task, projects, teams]);
 
@@ -91,41 +93,29 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
         <CardHeader>
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg font-semibold">{task.title}</CardTitle>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <EllipsisVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canEditDelete && (
-                  <>
-                    <DropdownMenuItem onClick={() => onEdit(task)}>
-                      <FilePenLine className="mr-2 h-4 w-4" />
-                      <span>Edit</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/40"
-                      onClick={() => deleteTask(task.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                 {canRaiseTicket && (
-                  <>
-                  {canEditDelete && <DropdownMenuSeparator />}
-                  <DropdownMenuItem onClick={() => setTicketSheetOpen(true)}>
-                    <Ticket className="mr-2 h-4 w-4" />
-                    <span>Raise Ticket</span>
-                  </DropdownMenuItem>
-                  </>
-                )}
-                {!canEditDelete && !canRaiseTicket && <DropdownMenuItem disabled>No actions available</DropdownMenuItem>}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {canEditDelete && (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <EllipsisVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(task)}>
+                        <FilePenLine className="mr-2 h-4 w-4" />
+                        <span>Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/40"
+                        onClick={() => deleteTask(task.id)}
+                        >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
           </div>
           {task.description && (
             <CardDescription className="pt-2">{task.description}</CardDescription>
@@ -160,20 +150,6 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
           </div>
         </CardFooter>
       </Card>
-
-      <Sheet open={isTicketSheetOpen} onOpenChange={setTicketSheetOpen}>
-        <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="font-headline">Raise a Ticket</SheetTitle>
-            <SheetDescription>
-              Describe your issue or question regarding the task: "{task.title}".
-            </SheetDescription>
-          </SheetHeader>
-          <div className="py-4">
-            <TicketForm task={task} onClose={() => setTicketSheetOpen(false)} />
-          </div>
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

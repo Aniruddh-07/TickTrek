@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { MOCK_TASKS, MOCK_TICKETS, MOCK_PROJECTS, MOCK_TEAMS, MOCK_USERS } from '@/lib/mock-data';
-import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam, TicketReply } from '@/lib/types';
+import type { Task, NewTask, Ticket, Project, Team, User, NewProject, NewTeam, TicketReply, NewTicket } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface TasksContextType {
@@ -18,7 +18,7 @@ interface TasksContextType {
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   deleteTask: (taskId: string) => void;
   getTaskById: (taskId: string) => Task | undefined;
-  raiseTicket: (ticket: Omit<Ticket, 'id' | 'status' | 'replies'>) => void;
+  raiseTicket: (ticket: NewTicket) => void;
   updateTicketStatus: (ticketId: string, status: 'open' | 'closed') => void;
   addTicketReply: (ticketId: string, message: string, authorId: string) => void;
   addProject: (project: NewProject) => void;
@@ -95,7 +95,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     [tasks]
   );
 
-  const raiseTicket = useCallback((ticketData: Omit<Ticket, 'id' | 'status' | 'replies'>) => {
+  const raiseTicket = useCallback((ticketData: NewTicket) => {
     const newTicket: Ticket = {
       id: `ticket-${crypto.randomUUID()}`,
       ...ticketData,

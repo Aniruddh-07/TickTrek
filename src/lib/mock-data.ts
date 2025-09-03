@@ -1,4 +1,5 @@
 
+
 import type { Task, User, Project, Team, Ticket } from './types';
 
 export const MOCK_USERS: User[] = [
@@ -112,8 +113,30 @@ export const MOCK_TASKS: Task[] = [
 ];
 
 export const MOCK_TICKETS: Ticket[] = [
-    { id: 'ticket-1', taskId: 'task-1', raisedBy: 'user-3', assigneeId: 'user-2', message: 'I need access to the Figma files.', status: 'open', replies: [], createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()},
-    { id: 'ticket-2', taskId: 'task-2', raisedBy: 'user-4', assigneeId: 'user-5', message: 'Which hashing algorithm should I use?', status: 'open', replies: [
-      { id: 'reply-1', authorId: 'user-5', message: 'Please use bcrypt for hashing.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() }
-    ], createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString()},
+    { 
+      id: 'ticket-1',
+      title: 'Need Figma Access',
+      message: 'I need access to the Figma files for Project Phoenix.', 
+      raisedBy: 'user-3', 
+      assigneeId: 'user-2', 
+      status: 'open', 
+      replies: [], 
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+      priority: 'medium',
+      projectId: 'proj-1'
+    },
+    { 
+      id: 'ticket-2',
+      title: 'Question about Hashing Algorithm',
+      message: 'Which hashing algorithm should I use for the authentication API?',
+      raisedBy: 'user-4', 
+      assigneeId: 'user-5', 
+      status: 'open', 
+      replies: [
+        { id: 'reply-1', authorId: 'user-5', message: 'Please use bcrypt for hashing.', createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() }
+      ], 
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+      priority: 'high',
+      projectId: 'proj-2'
+    },
 ];

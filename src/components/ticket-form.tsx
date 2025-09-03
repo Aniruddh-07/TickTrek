@@ -10,110 +10,96 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
-import type { Task } from '@/lib/types';
+import type { NewTicket, Task, User } from '@/lib/types';
 import { useMemo } from 'react';
+import { Input } from './ui/input';
+import { TASK_PRIORITIES } from '@/lib/types';
 
 const ticketFormSchema = z.object({
+    title: z.string().min(5, "Subject must be at least 5 characters long."),
+    message: z.string().min(10, "Description must be at least 10 characters long."),
     assigneeId: z.string().min(1, "Please select a user to assign the ticket to."),
-    message: z.string().min(10, "Message must be at least 10 characters long."),
+    projectId: z.string().optional(),
+    priority: z.enum(TASK_PRIORITIES),
 });
 
 type TicketFormValues = z.infer<typeof ticketFormSchema>;
 
 interface TicketFormProps {
-    task: Task;
     onClose: () => void;
 }
 
-export function TicketForm({ task, onClose }: TicketFormProps) {
+export function TicketForm({ onClose }: TicketFormProps) {
     const { user } = useUser();
     const { users, raiseTicket, teams, projects } = useTasks();
 
-    const teamLeads = useMemo(() => {
-        const project = projects.find(p => p.id === task.projectId);
-        if (!project) return [];
-        const projectTeams = teams.filter(t => project.teamIds.includes(t.id));
-        const leadIds = projectTeams.map(t => t.leadId);
-        return users.filter(u => leadIds.includes(u.id));
-    }, [task, projects, teams, users]);
-    
     const form = useForm<TicketFormValues>({
         resolver: zodResolver(ticketFormSchema),
         defaultValues: {
-            assigneeId: teamLeads[0]?.id || '',
+            title: '',
             message: '',
+            assigneeId: '',
+            projectId: '',
+            priority: 'medium',
         }
     });
 
     const onSubmit = (data: TicketFormValues) => {
         if (!user) return;
-        raiseTicket({
-            taskId: task.id,
+        const newTicket: NewTicket = {
             raisedBy: user.id,
             ...data
-        });
+        };
+        raiseTicket(newTicket);
         onClose();
     };
 
     const assignableUsers = useMemo(() => {
-        const adminUser = users.find(u => u.role === 'admin');
-        const uniqueUsers = new Map<string, {id: string, name: string}>();
-
-        teamLeads.forEach(lead => {
-            if (lead.id !== user?.id) {
-                uniqueUsers.set(lead.id, lead);
-            }
-        });
+        // Allow assigning to team leads and admins, but not oneself.
+        const teamLeads = new Set(teams.map(t => t.leadId));
+        return users.filter(u => 
+            (u.role === 'admin' || teamLeads.has(u.id)) && u.id !== user?.id
+        );
+    }, [users, teams, user]);
+    
+    const availableProjects = useMemo(() => {
+        if (!user) return [];
+        if (user.role === 'admin') return projects;
         
-        // This explicitly prevents admin from being assigned a ticket unless they are a lead
-        if (adminUser && !uniqueUsers.has(adminUser.id)) {
-           // do not add admin
-        } else if (adminUser) {
-           // admin is a lead, so they are already in the list
-        }
+        const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
+        return projects.filter(p => p.teamIds.some(teamId => myTeamIds.includes(teamId)));
 
+    }, [user, projects, teams]);
 
-        return Array.from(uniqueUsers.values());
-    }, [users, teamLeads, user]);
 
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                     control={form.control}
-                    name="assigneeId"
+                    name="title"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Assign To</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a team lead" />
-                                </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {assignableUsers.map(u => (
-                                        <SelectItem key={u.id} value={u.id}>
-                                            {u.name} (Lead)
-                                        </SelectItem>
-                                    ))}
-                                    {assignableUsers.length === 0 && <SelectItem value="no-one" disabled>No available leads</SelectItem>}
-                                </SelectContent>
-                            </Select>
+                            <FormLabel>Subject</FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g. Cannot access staging server" {...field} />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                 <FormField
+
+                <FormField
                     control={form.control}
                     name="message"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Message</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
                             <Textarea
-                                placeholder="Describe your issue or question..."
+                                placeholder="Describe your issue or question in detail..."
                                 className="resize-none"
+                                rows={5}
                                 {...field}
                             />
                         </FormControl>
@@ -121,7 +107,84 @@ export function TicketForm({ task, onClose }: TicketFormProps) {
                         </FormItem>
                     )}
                 />
-                <div className="flex justify-end gap-2">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <FormField
+                        control={form.control}
+                        name="assigneeId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Assign To</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a person" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {assignableUsers.map(u => (
+                                            <SelectItem key={u.id} value={u.id}>
+                                                {u.name} ({u.role === 'admin' ? 'Admin' : 'Lead'})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="priority"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Priority</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {TASK_PRIORITIES.map((priority) => (
+                                            <SelectItem key={priority} value={priority} className='capitalize'>
+                                            {priority}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                 <FormField
+                    control={form.control}
+                    name="projectId"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Related Project (Optional)</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a project" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="">None</SelectItem>
+                                    {availableProjects.map(p => (
+                                        <SelectItem key={p.id} value={p.id}>
+                                            {p.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+               
+                <div className="flex justify-end gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                     <Button type="submit">Submit Ticket</Button>
                 </div>
