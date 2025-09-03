@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Calendar, EllipsisVertical, Trash2, FilePenLine, Circle, CheckCircle, Clock, User, Ticket } from 'lucide-react';
+import { Calendar, EllipsisVertical, Trash2, FilePenLine, Circle, CheckCircle, Clock, User, Ticket, NotebookPen } from 'lucide-react';
 import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
 import { cn } from '@/lib/utils';
@@ -34,6 +34,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { TicketForm } from './ticket-form';
+import { TaskForm } from './task-form';
 
 
 interface TaskCardProps {

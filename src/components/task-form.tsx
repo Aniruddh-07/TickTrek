@@ -26,6 +26,7 @@ import {
   TASK_PRIORITIES,
   TASK_STATUSES,
   type Task,
+  type NewTask,
 } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
 import { useUser } from '@/context/user-context';
@@ -46,13 +47,14 @@ const taskFormSchema = z.object({
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
 interface TaskFormProps {
-  initialData?: Task;
+  initialData?: Partial<Task> | Partial<NewTask>; // Allow partial data for pre-filling
   onClose: () => void;
 }
 
 export function TaskForm({ initialData, onClose }: TaskFormProps) {
   const { addTask, updateTask, projects, teams, users } = useTasks();
   const { user } = useUser();
+  const isEditing = 'id' in (initialData || {});
   
   const availableProjects = useMemo(() => {
     if (!user) return [];
@@ -68,22 +70,15 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
-    defaultValues: initialData
-    ? {
-        ...initialData,
-        dueDate: new Date(initialData.dueDate).toISOString().split('T')[0],
-        assigneeId: initialData.assigneeId || 'unassigned',
-        description: initialData.description || '',
-      }
-    : {
-        title: '',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-        dueDate: new Date().toISOString().split('T')[0],
-        projectId: availableProjects[0]?.id || '',
-        assigneeId: 'unassigned',
-      },
+    defaultValues: {
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      status: initialData?.status || 'pending',
+      priority: initialData?.priority || 'medium',
+      dueDate: initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      projectId: initialData?.projectId || availableProjects[0]?.id || '',
+      assigneeId: initialData?.assigneeId || 'unassigned',
+    }
   });
 
   const selectedProjectId = form.watch('projectId');
@@ -106,7 +101,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
       ...data,
       assigneeId: data.assigneeId === 'unassigned' ? undefined : data.assigneeId,
     };
-    if (initialData) {
+    if (isEditing && initialData?.id) {
       updateTask(initialData.id, submissionData);
     } else {
       addTask(submissionData);
@@ -277,7 +272,7 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
         </div>
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">{initialData ? 'Save Changes' : 'Add Task'}</Button>
+            <Button type="submit">{isEditing ? 'Save Changes' : 'Add Task'}</Button>
         </div>
       </form>
     </Form>

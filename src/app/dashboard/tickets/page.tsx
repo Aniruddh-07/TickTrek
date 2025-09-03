@@ -10,10 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { useMemo, useState } from 'react';
-import type { Ticket, TaskPriority } from '@/lib/types';
-import { PlusCircle, Projector } from 'lucide-react';
+import type { Ticket, TaskPriority, NewTask } from '@/lib/types';
+import { PlusCircle, Projector, NotebookPen } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { TicketForm } from '@/components/ticket-form';
+import { TaskForm } from '@/components/task-form';
 
 
 const priorityClasses: Record<TaskPriority, string> = {
@@ -25,7 +26,9 @@ const priorityClasses: Record<TaskPriority, string> = {
 export default function TicketsPage() {
   const { user } = useUser();
   const { tickets, updateTicketStatus, addTicketReply, users, projects } = useTasks();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isTicketSheetOpen, setIsTicketSheetOpen] = useState(false);
+  const [isTaskSheetOpen, setIsTaskSheetOpen] = useState(false);
+  const [taskPrefillData, setTaskPrefillData] = useState<Partial<NewTask> | undefined>(undefined);
 
   if (!user) return <p>Loading...</p>;
 
@@ -45,6 +48,15 @@ export default function TicketsPage() {
         e.currentTarget.reset();
     }
   };
+  
+  const handleCreateTaskFromTicket = (ticket: Ticket) => {
+    setTaskPrefillData({
+      title: `Ticket: ${ticket.title}`,
+      description: ticket.message,
+      projectId: ticket.projectId,
+    });
+    setIsTaskSheetOpen(true);
+  }
 
   return (
     <div>
@@ -55,7 +67,7 @@ export default function TicketsPage() {
             Your raised and assigned tickets.
           </p>
         </div>
-         <Button onClick={() => setIsSheetOpen(true)}>
+         <Button onClick={() => setIsTicketSheetOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Create Ticket
         </Button>
@@ -64,7 +76,7 @@ export default function TicketsPage() {
       {relevantTickets.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed rounded-lg">
               <p className="text-muted-foreground">No tickets to display.</p>
-              <Button onClick={() => setIsSheetOpen(true)} className="mt-4">Create Your First Ticket</Button>
+              <Button onClick={() => setIsTicketSheetOpen(true)} className="mt-4">Create Your First Ticket</Button>
           </div>
       ) : (
         <div className="space-y-4">
@@ -74,6 +86,7 @@ export default function TicketsPage() {
                 const project = projects.find(p => p.id === ticket.projectId);
 
                 const canInteract = ticket.status === 'open' && (ticket.assigneeId === user.id || ticket.raisedBy === user.id);
+                const canCreateTask = ticket.status === 'open' && ticket.assigneeId === user.id;
 
                 return (
                     <Card key={ticket.id} className={priorityClasses[ticket.priority] + ' border-l-4'}>
@@ -134,7 +147,13 @@ export default function TicketsPage() {
                                             <Button type="submit">Send Reply</Button>
                                         </div>
                                     </form>
-                                    <div className="flex justify-end pt-2 border-t">
+                                    <div className="flex justify-end pt-2 border-t gap-2">
+                                         {canCreateTask && (
+                                            <Button variant="default" onClick={() => handleCreateTaskFromTicket(ticket)}>
+                                                <NotebookPen className="mr-2 h-4 w-4"/>
+                                                Create Task from Ticket
+                                            </Button>
+                                        )}
                                         <Button variant="secondary" onClick={() => updateTicketStatus(ticket.id, 'closed')}>
                                             Mark as Closed
                                         </Button>
@@ -148,7 +167,7 @@ export default function TicketsPage() {
         </div>
       )}
 
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <Sheet open={isTicketSheetOpen} onOpenChange={setIsTicketSheetOpen}>
         <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="font-headline">Create a New Ticket</SheetTitle>
@@ -157,7 +176,24 @@ export default function TicketsPage() {
             </SheetDescription>
           </SheetHeader>
           <div className="py-4">
-            <TicketForm onClose={() => setIsSheetOpen(false)} />
+            <TicketForm onClose={() => setIsTicketSheetOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isTaskSheetOpen} onOpenChange={setIsTaskSheetOpen}>
+        <SheetContent className="sm:max-w-lg w-[90vw] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="font-headline">Add New Task</SheetTitle>
+            <SheetDescription>
+                Fill in the details below to create a new task based on the ticket.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="py-4">
+            <TaskForm 
+                onClose={() => setIsTaskSheetOpen(false)} 
+                initialData={taskPrefillData}
+            />
           </div>
         </SheetContent>
       </Sheet>
