@@ -73,7 +73,7 @@ export default function TicketsPage() {
                 const assignedTo = users.find(u => u.id === ticket.assigneeId);
                 const project = projects.find(p => p.id === ticket.projectId);
 
-                const canReply = ticket.assigneeId === user.id && ticket.status === 'open';
+                const canInteract = ticket.status === 'open' && (ticket.assigneeId === user.id || ticket.raisedBy === user.id);
 
                 return (
                     <Card key={ticket.id} className={priorityClasses[ticket.priority] + ' border-l-4'}>
@@ -126,16 +126,20 @@ export default function TicketsPage() {
                                 })}
                             </div>
 
-                            {canReply && (
-                                <form className="mt-4 space-y-2" onSubmit={(e) => handleReplySubmit(ticket.id, e)}>
-                                    <Textarea name="reply" placeholder="Type your reply..." required />
-                                    <div className="flex justify-end gap-2">
-                                        <Button type="submit">Send Reply</Button>
+                            {canInteract && (
+                                <div className="mt-4 space-y-4">
+                                    <form className="space-y-2" onSubmit={(e) => handleReplySubmit(ticket.id, e)}>
+                                        <Textarea name="reply" placeholder="Type your reply..." required />
+                                        <div className="flex justify-end">
+                                            <Button type="submit">Send Reply</Button>
+                                        </div>
+                                    </form>
+                                    <div className="flex justify-end pt-2 border-t">
                                         <Button variant="secondary" onClick={() => updateTicketStatus(ticket.id, 'closed')}>
                                             Mark as Closed
                                         </Button>
                                     </div>
-                                </form>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
