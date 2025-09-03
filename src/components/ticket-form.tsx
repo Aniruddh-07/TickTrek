@@ -39,7 +39,7 @@ export function TicketForm({ onClose }: TicketFormProps) {
             title: '',
             message: '',
             assigneeId: '',
-            projectId: '',
+            projectId: 'none',
             priority: 'medium',
         }
     });
@@ -48,14 +48,15 @@ export function TicketForm({ onClose }: TicketFormProps) {
         if (!user) return;
         const newTicket: NewTicket = {
             raisedBy: user.id,
-            ...data
+            ...data,
+            projectId: data.projectId === 'none' ? undefined : data.projectId
         };
         raiseTicket(newTicket);
         onClose();
     };
 
     const assignableUsers = useMemo(() => {
-        // Allow assigning to team leads and admins, but not oneself.
+        // Allow assigning to team leads and admins, but not oneself or other members.
         const teamLeads = new Set(teams.map(t => t.leadId));
         return users.filter(u => 
             (u.role === 'admin' || teamLeads.has(u.id)) && u.id !== user?.id
@@ -171,7 +172,7 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
+                                    <SelectItem value="none">None</SelectItem>
                                     {availableProjects.map(p => (
                                         <SelectItem key={p.id} value={p.id}>
                                             {p.name}
