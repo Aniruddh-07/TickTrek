@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -32,7 +33,7 @@ function AdminDashboard() {
 
   const teamProgress = useMemo(() => {
     return teams.map(team => {
-      const teamProjects = projects.filter(p => p.teamId === team.id);
+      const teamProjects = projects.filter(p => p.teamIds.includes(team.id));
       const teamProjectIds = teamProjects.map(p => p.id);
       const teamTasks = tasks.filter(t => teamProjectIds.includes(t.projectId));
       const completedTasks = teamTasks.filter(t => t.status === 'completed').length;
@@ -62,42 +63,48 @@ function AdminDashboard() {
 
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-       <Card>
-        <CardHeader>
-          <CardTitle>Team Progress</CardTitle>
-          <CardDescription>Percentage of completed tasks per team.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={teamProgress}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis unit="%" />
-              <Tooltip />
-              <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Progress</CardTitle>
-          <CardDescription>Percentage of completed tasks per project.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={projectProgress}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis unit="%" />
-              <Tooltip />
-              <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Admin Overview</CardTitle>
+        <CardDescription>Real-time progress of teams and projects across the workspace.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Progress</CardTitle>
+            <CardDescription>Percentage of completed tasks per team.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={teamProgress}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis unit="%" />
+                <Tooltip />
+                <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Progress</CardTitle>
+            <CardDescription>Percentage of completed tasks per project.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={projectProgress}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis unit="%" />
+                <Tooltip />
+                <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -253,8 +260,8 @@ export default function DashboardPage() {
   if (!user) return <p>Loading...</p>;
   
   return (
-    <>
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+    <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
             <div className="flex-1">
                 <h1 className="text-lg font-semibold md:text-2xl font-headline">Welcome, {user.name}!</h1>
                 <p className="text-sm text-muted-foreground">
@@ -265,6 +272,6 @@ export default function DashboardPage() {
 
         {user.role === 'admin' && <AdminDashboard />}
         {user.role === 'member' && <MemberDashboard user={user} />}
-    </>
+    </div>
   );
 }
