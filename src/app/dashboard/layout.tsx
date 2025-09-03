@@ -96,6 +96,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         { href: '/dashboard/kanban', icon: ListTodo, label: 'Task Board', notificationKey: 'kanban' },
         { href: '/dashboard/projects', icon: FolderKanban, label: 'Projects', notificationKey: 'projects' },
         { href: '/dashboard/teams', icon: Users, label: 'Teams', notificationKey: 'teams' },
+        { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets', notificationKey: 'tickets' },
     ],
     member: [
         { href: '/dashboard', icon: LayoutGrid, label: 'Dashboard', notificationKey: 'dashboard' },

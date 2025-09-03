@@ -56,11 +56,23 @@ export function TicketForm({ onClose }: TicketFormProps) {
     };
 
     const assignableUsers = useMemo(() => {
-        // Allow assigning to team leads and admins, but not oneself or other members.
-        const teamLeads = new Set(teams.map(t => t.leadId));
-        return users.filter(u => 
-            (u.role === 'admin' || teamLeads.has(u.id)) && u.id !== user?.id
-        );
+        if (!user) return [];
+        
+        if (user.role === 'admin') {
+            // Admin can raise tickets to Team Leads
+            const teamLeadIds = new Set(teams.map(t => t.leadId));
+            return users.filter(u => teamLeadIds.has(u.id));
+        } else {
+            // Members can raise tickets to anyone in their team(s)
+            const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
+            const myTeamMembers = new Set<string>();
+            teams.forEach(team => {
+                if (myTeamIds.includes(team.id)) {
+                    team.memberIds.forEach(memberId => myTeamMembers.add(memberId));
+                }
+            });
+            return users.filter(u => myTeamMembers.has(u.id) && u.id !== user.id);
+        }
     }, [users, teams, user]);
     
     const availableProjects = useMemo(() => {
@@ -123,11 +135,14 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {assignableUsers.map(u => (
-                                            <SelectItem key={u.id} value={u.id}>
-                                                {u.name} ({u.role === 'admin' ? 'Admin' : 'Lead'})
-                                            </SelectItem>
-                                        ))}
+                                        {assignableUsers.map(u => {
+                                            const role = teams.some(t => t.leadId === u.id) ? 'Lead' : 'Member'
+                                            return (
+                                                <SelectItem key={u.id} value={u.id}>
+                                                    {u.name} ({role})
+                                                </SelectItem>
+                                            )
+                                        })}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
