@@ -1,0 +1,24 @@
+{
+  "organizations": [
+    {
+      "id": "ticktrek-inc",
+      "name": "TickTrek Inc."
+    }
+  ],
+  "users": [
+    {
+      "id": "user-1",
+      "name": "Admin User",
+      "email": "admin.user@ticktrek-inc",
+      "passwordHash": "$2b$10$fKIPoremqN9s7gPzVW2c.uY.r0.C4F8FmJ1234567890abcdef",
+      "role": "admin",
+      "avatar": "https://picsum.photos/seed/admin/50",
+      "organizationId": "ticktrek-inc",
+      "status": "active"
+    }
+  ],
+  "teams": [],
+  "projects": [],
+  "tickets": [],
+  "tasks": []
+}
