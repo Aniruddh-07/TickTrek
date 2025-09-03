@@ -1,4 +1,5 @@
 
+
 'use server'
 
 import fs from 'fs/promises';
@@ -68,4 +69,24 @@ export async function saveData(data: DataSnapshot): Promise<void> {
     console.error("Error writing data file:", error);
     throw new Error("Failed to save data.");
   }
+}
+
+
+export async function generateInviteToken(orgId: string): Promise<string> {
+    const currentData = await getAllData();
+    const organization = currentData.organizations.find(o => o.id === orgId);
+    if (!organization) {
+        throw new Error('Organization not found');
+    }
+    
+    const token = `invite-${crypto.randomUUID()}`;
+    
+    if (!organization.inviteTokens) {
+        organization.inviteTokens = [];
+    }
+    organization.inviteTokens.push(token);
+
+    await saveData(currentData);
+
+    return token;
 }

@@ -1,4 +1,5 @@
 
+
 export const TASK_STATUSES = ['pending', 'in-progress', 'completed'] as const;
 export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const;
 export const USER_ROLES = ['admin', 'member'] as const;
@@ -12,6 +13,7 @@ export type UserStatus = (typeof USER_STATUSES)[number];
 export interface Organization {
   id: string;
   name: string;
+  inviteTokens?: string[];
 }
 
 export interface User {

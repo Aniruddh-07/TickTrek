@@ -1,9 +1,11 @@
+
+
 'use client';
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Link as LinkIcon, Check } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import { useTasks } from '@/context/tasks-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +29,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { generateInviteToken } from '@/lib/data-service';
 
 export default function TeamsPage() {
     const { user } = useUser();
@@ -34,6 +48,10 @@ export default function TeamsPage() {
     const { teams, users } = data;
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<Team | undefined>(undefined);
+    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+    const [inviteLink, setInviteLink] = useState('');
+    const [isCopied, setIsCopied] = useState(false);
+    const { toast } = useToast();
 
     const handleCreateClick = () => {
         setEditingTeam(undefined);
@@ -48,6 +66,33 @@ export default function TeamsPage() {
     const handleCloseSheet = () => {
         setIsSheetOpen(false);
         setEditingTeam(undefined);
+    };
+
+    const handleGenerateInvite = async () => {
+      if (!user) return;
+      try {
+        const token = await generateInviteToken(user.organizationId);
+        const newInviteLink = `${window.location.origin}/signup?token=${token}`;
+        setInviteLink(newInviteLink);
+        setIsInviteDialogOpen(true);
+        setIsCopied(false);
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to generate invite link.',
+          variant: 'destructive',
+        });
+      }
+    };
+    
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(inviteLink).then(() => {
+            setIsCopied(true);
+            toast({
+                title: 'Copied!',
+                description: 'Invite link copied to clipboard.',
+            });
+        });
     };
     
     const teamsWithMembers = useMemo(() => {
@@ -68,15 +113,21 @@ export default function TeamsPage() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between items-center mb-6 gap-2">
                  <div>
                     <h1 className="text-2xl font-bold font-headline">Manage Teams</h1>
                     <p className="text-muted-foreground">Create teams and manage members.</p>
                 </div>
-                <Button onClick={handleCreateClick}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Create Team
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={handleGenerateInvite}>
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Invite Member
+                    </Button>
+                    <Button onClick={handleCreateClick}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Create Team
+                    </Button>
+                </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -145,6 +196,38 @@ export default function TeamsPage() {
                 </div>
                 </SheetContent>
             </Sheet>
+
+            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                    <DialogTitle>Invite a New Member</DialogTitle>
+                    <DialogDescription>
+                        Share this link with the person you want to invite. They can use it to sign up and join your organization.
+                    </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center space-x-2">
+                    <div className="grid flex-1 gap-2">
+                        <Label htmlFor="link" className="sr-only">
+                        Link
+                        </Label>
+                        <Input
+                        id="link"
+                        defaultValue={inviteLink}
+                        readOnly
+                        />
+                    </div>
+                    <Button type="button" size="sm" className="px-3" onClick={handleCopyLink}>
+                        <span className="sr-only">Copy</span>
+                        {isCopied ? <Check className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
+                    </Button>
+                    </div>
+                    <DialogFooter className="sm:justify-start">
+                    <Button type="button" variant="secondary" onClick={() => setIsInviteDialogOpen(false)}>
+                        Close
+                    </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

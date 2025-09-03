@@ -1,4 +1,5 @@
 
+
 'use server'
 
 import type { User, Organization } from './types';
@@ -37,16 +38,18 @@ export async function handleSignIn(credentials: { email: string, password: strin
 type SignUpData = {
     mode: 'create' | 'join',
     orgName?: string,
-    orgId?: string,
     fullName: string,
     email: string,
-    password: string
+    password: string,
+    inviteToken?: string,
 }
 
 export async function handleSignUp(data: SignUpData): Promise<{ success: boolean; user?: User; error?: string; message?: string, mode?: 'create' | 'join' }> {
     const currentData = await getAllData();
     const { organizations, users } = currentData;
     let organization: Organization | undefined;
+    let finalStatus: 'active' | 'pending-approval' = 'pending-approval';
+    let finalRole: 'admin' | 'member' = 'member';
 
     if (data.mode === 'create') {
         if (!data.orgName) return { success: false, error: "Organization name is required." };
@@ -54,14 +57,19 @@ export async function handleSignUp(data: SignUpData): Promise<{ success: boolean
         if (organizations.find(o => o.id === newOrgId)) {
             return { success: false, error: "An organization with this name already exists." };
         }
-        organization = { id: newOrgId, name: data.orgName };
+        organization = { id: newOrgId, name: data.orgName, inviteTokens: [] };
         organizations.push(organization);
-    } else {
-        if (!data.orgId) return { success: false, error: "Organization ID is required." };
-        organization = organizations.find(o => o.id === data.orgId);
+        finalStatus = 'active';
+        finalRole = 'admin';
+    } else { // This is now only the invite flow
+        if (!data.inviteToken) return { success: false, error: "An invite token is required." };
+        organization = organizations.find(o => o.inviteTokens?.includes(data.inviteToken!));
+        
         if (!organization) {
-            return { success: false, error: "Organization not found." };
+            return { success: false, error: "Invalid or expired invite link." };
         }
+        finalStatus = 'active'; // User is automatically approved
+        finalRole = 'member';
     }
 
     const userEmailInOrg = `${data.email.split('@')[0]}@${organization.id}`;
@@ -76,18 +84,24 @@ export async function handleSignUp(data: SignUpData): Promise<{ success: boolean
         name: data.fullName,
         email: userEmailInOrg,
         passwordHash,
-        role: data.mode === 'create' ? 'admin' : 'member',
+        role: finalRole,
         avatar: `https://picsum.photos/seed/${data.fullName}/50`,
         organizationId: organization.id,
-        status: data.mode === 'create' ? 'active' : 'pending-approval',
+        status: finalStatus,
     };
     
     users.push(newUser);
+    
+    // Invalidate the token after use
+    if (data.mode === 'join' && organization.inviteTokens) {
+        organization.inviteTokens = organization.inviteTokens.filter(t => t !== data.inviteToken);
+    }
+    
     await saveData({ ...currentData, organizations, users });
     
     const message = data.mode === 'create'
         ? `Your organization is ready! Your new login ID is ${newUser.email}.`
-        : `Your request to join ${organization.name} has been sent. Your login ID will be ${newUser.email}. You can log in once approved.`;
+        : `Welcome to ${organization.name}! Your account is active. Your new login ID is ${newUser.email}.`;
 
     return { success: true, user: newUser, message, mode: data.mode };
 }
