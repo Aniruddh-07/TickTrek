@@ -12,6 +12,8 @@ interface NotificationState {
     projects: boolean;
     teams: boolean;
     tickets: boolean;
+    settings: boolean;
+    support: boolean;
 }
 
 interface NotificationsContextType {
@@ -27,6 +29,8 @@ const initialNotifications: NotificationState = {
     projects: false,
     teams: false,
     tickets: false,
+    settings: false,
+    support: false,
 };
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {

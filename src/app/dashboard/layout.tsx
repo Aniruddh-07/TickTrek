@@ -27,6 +27,8 @@ import {
   Users,
   FolderKanban,
   Ticket,
+  Settings,
+  LifeBuoy,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Logo from '@/components/logo';
@@ -107,6 +109,10 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   const navItems = user ? navItemsByRole[user.role] : [];
+  const commonNavItems: { href: string; icon: React.ElementType; label: string, notificationKey: keyof typeof notifications }[] = [
+    { href: '/dashboard/settings', icon: Settings, label: 'Settings', notificationKey: 'settings' },
+    { href: '/dashboard/support', icon: LifeBuoy, label: 'Support', notificationKey: 'support' },
+  ];
   
   if (!user) {
     return (
@@ -140,6 +146,19 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
               ))}
             </nav>
           </div>
+          <div className="mt-auto p-4">
+             <nav className="grid items-start px-2 text-sm font-medium lg:px-4 border-t pt-4">
+                {commonNavItems.map((item) => (
+                  <NavLink key={item.href} href={item.href}>
+                      <div className="relative">
+                          <item.icon className="h-4 w-4" />
+                          {notifications[item.notificationKey] && <div className="absolute top-[-2px] right-[-2px] h-2 w-2 rounded-full bg-red-500" />}
+                      </div>
+                      {item.label}
+                  </NavLink>
+                ))}
+             </nav>
+           </div>
         </div>
       </div>
       <div className="flex flex-col">
@@ -172,6 +191,17 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </MobileNavLink>
                 ))}
+                 <div className="border-t mt-4 pt-4">
+                    {commonNavItems.map((item) => (
+                      <MobileNavLink key={item.href} href={item.href}>
+                        <div className="relative">
+                            <item.icon className="h-5 w-5" />
+                            {notifications[item.notificationKey] && <div className="absolute top-[-2px] right-[-2px] h-2 w-2 rounded-full bg-red-500" />}
+                        </div>
+                        {item.label}
+                      </MobileNavLink>
+                    ))}
+                 </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -202,8 +232,8 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
                 ))}
               </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/dashboard/settings">Settings</Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/dashboard/support">Support</Link></DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/">Logout</Link></DropdownMenuItem>
             </DropdownMenuContent>
