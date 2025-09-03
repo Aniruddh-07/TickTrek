@@ -21,9 +21,9 @@ export const MOCK_TEAMS: Team[] = [
 ];
 
 export const MOCK_PROJECTS: Project[] = [
-  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamIds: ['team-1'] },
-  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamIds: ['team-2'] },
-  { id: 'proj-3', name: 'Project Chimera', description: 'Cross-functional project for Q3 goals.', teamIds: ['team-1', 'team-2'] },
+  { id: 'proj-1', name: 'Project Phoenix', description: 'Rebuild the main dashboard with new tech.', teamIds: ['team-1'], createdAt: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString() },
+  { id: 'proj-2', name: 'Project Titan', description: 'API scaling and performance improvements.', teamIds: ['team-2'], createdAt: new Date(new Date().setDate(new Date().getDate() - 45)).toISOString() },
+  { id: 'proj-3', name: 'Project Chimera', description: 'Cross-functional project for Q3 goals.', teamIds: ['team-1', 'team-2'], createdAt: new Date(new Date().setDate(new Date().getDate() - 60)).toISOString() },
 ];
 
 export const MOCK_TASKS: Task[] = [
@@ -36,6 +36,7 @@ export const MOCK_TASKS: Task[] = [
     priority: 'high',
     projectId: 'proj-1',
     assigneeId: 'user-3',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
   },
   {
     id: 'task-2',
@@ -46,16 +47,18 @@ export const MOCK_TASKS: Task[] = [
     priority: 'high',
     projectId: 'proj-2',
     assigneeId: 'user-4',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString(),
   },
   {
     id: 'task-3',
     title: 'Fix bug in the payment gateway',
     description: 'Users are reporting a 500 error when using PayPal. Investigate and deploy a hotfix.',
-    dueDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0],
+    dueDate: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0],
     status: 'in-progress',
     priority: 'medium',
     projectId: 'proj-2',
     assigneeId: 'user-4',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 3)).toISOString(),
   },
   {
     id: 'task-4',
@@ -66,6 +69,7 @@ export const MOCK_TASKS: Task[] = [
     priority: 'low',
     projectId: 'proj-1',
     assigneeId: 'user-3',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
   },
   {
     id: 'task-5',
@@ -75,16 +79,18 @@ export const MOCK_TASKS: Task[] = [
     status: 'pending',
     priority: 'medium',
     projectId: 'proj-3',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 10)).toISOString(),
   },
   {
     id: 'task-6',
     title: 'User testing for the beta release',
     description: 'Conduct user testing sessions with a select group of beta testers. Gather feedback and identify usability issues.',
-    dueDate: new Date(new Date().setDate(new Date().getDate() + 5)).toISOString().split('T')[0],
+    dueDate: new Date(new Date().setDate(new Date().getDate() - 5)).toISOString().split('T')[0],
     status: 'completed',
     priority: 'medium',
     projectId: 'proj-3',
     assigneeId: 'user-3',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 15)).toISOString(),
   },
   {
     id: 'task-7',
@@ -94,6 +100,7 @@ export const MOCK_TASKS: Task[] = [
     status: 'pending',
     priority: 'high',
     projectId: 'proj-2',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
   },
   {
     id: 'task-8',
@@ -104,6 +111,7 @@ export const MOCK_TASKS: Task[] = [
     priority: 'low',
     projectId: 'proj-1',
     assigneeId: 'user-2',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 20)).toISOString(),
   },
    {
     id: 'task-9',
@@ -114,6 +122,7 @@ export const MOCK_TASKS: Task[] = [
     priority: 'high',
     projectId: 'proj-3',
     assigneeId: 'user-5',
+    createdAt: new Date(new Date().setDate(new Date().getDate() - 4)).toISOString(),
   },
 ];
 

@@ -52,6 +52,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
     (task: NewTask) => {
       const newTask: Task = {
         id: `task-${crypto.randomUUID()}`,
+        createdAt: new Date().toISOString(),
         ...task,
       };
       setTasks((prev) => [newTask, ...prev]);
@@ -144,6 +145,7 @@ export function TasksProvider({ children }: { children: ReactNode }) {
         ...project,
         teamIds: project.teamIds || [],
         description: project.description || '',
+        createdAt: new Date().toISOString(),
     };
     setProjects(prev => [newProject, ...prev]);
     triggerUpdate();

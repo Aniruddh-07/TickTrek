@@ -36,6 +36,7 @@ export interface Project {
   name: string;
   teamIds: string[];
   description: string;
+  createdAt: string;
 }
 
 export interface TicketReply {
@@ -68,9 +69,10 @@ export interface Task {
   priority: TaskPriority;
   projectId: string;
   assigneeId?: string;
+  createdAt: string;
 }
 
-export type NewTask = Omit<Task, 'id'>;
-export type NewProject = Omit<Project, 'id'>;
+export type NewTask = Omit<Task, 'id' | 'createdAt'>;
+export type NewProject = Omit<Project, 'id' | 'createdAt'>;
 export type NewTeam = Omit<Team, 'id'>;
 export type NewTicket = Omit<Ticket, 'id' | 'status' | 'replies' | 'createdAt'>;

@@ -23,7 +23,7 @@ import type { Task, TaskPriority, TaskStatus } from '@/lib/types';
 import { useTasks } from '@/context/tasks-context';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { useUser } from '@/context/user-context';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
@@ -64,6 +64,11 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
   };
   
   const assignee = users.find(u => u.id === task.assigneeId);
+  
+  const isOverdue = useMemo(() => {
+    return isPast(new Date(task.dueDate)) && task.status !== 'completed';
+  }, [task.dueDate, task.status]);
+
 
   const { canEditDelete } = useMemo(() => {
     if (!user) return { canEditDelete: false };
@@ -122,7 +127,10 @@ export default function TaskCard({ task, onEdit, isDraggable = false }: TaskCard
           )}
         </CardHeader>
         <CardContent className="flex-grow">
-          <div className="flex items-center text-sm text-muted-foreground">
+          <div className={cn(
+              "flex items-center text-sm text-muted-foreground",
+               isOverdue && "text-red-500"
+            )}>
             <Calendar className="mr-2 h-4 w-4" />
             <span>{format(new Date(task.dueDate), 'PPP')}</span>
           </div>
