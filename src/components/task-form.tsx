@@ -63,8 +63,8 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
     
     const myLeadTeams = teams.filter(t => t.leadId === user.id);
     if(myLeadTeams.length > 0) {
-        const myProjectIds = projects.filter(p => myLeadTeams.some(t => p.teamIds.includes(t.id))).map(p => p.id);
-        return projects.filter(p => myProjectIds.includes(p.id));
+        const myProjectIds = new Set(projects.filter(p => myLeadTeams.some(t => p.teamIds.includes(t.id))).map(p => p.id));
+        return projects.filter(p => myProjectIds.has(p.id));
     }
     return [];
   }, [user, projects, teams]);
@@ -240,40 +240,37 @@ export function TaskForm({ initialData, onClose }: TaskFormProps) {
                 </FormItem>
             )}
             />
-             <FormField
-                control={form.control}
-                name="assigneeId"
-                render={({ field }) => (
-                    <FormItem>
+            <FormField
+            control={form.control}
+            name="assigneeId"
+            render={({ field }) => (
+                <FormItem>
                     <FormLabel>Assign To</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      value={field.value}
-                      defaultValue={field.value}
-                      disabled={!selectedProjectId}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder={!selectedProjectId ? "First select a project" : "Assign to a member"} />
+                        <SelectTrigger disabled={!selectedProjectId}>
+                            <SelectValue placeholder={!selectedProjectId ? "Select a project first" : "Select a person"} />
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="unassigned">Unassigned</SelectItem>
-                          {availableUsers.map((user) => (
-                              <SelectItem key={user.id} value={user.id}>
-                                  {user.name}
-                              </SelectItem>
-                          ))}
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {availableUsers.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                            </SelectItem>
+                        ))}
                         </SelectContent>
                     </Select>
                     <FormMessage />
-                    </FormItem>
-                )}
+                </FormItem>
+            )}
             />
         </div>
         <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Add Task'}</Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit">{isEditing ? 'Save Changes' : 'Create Task'}</Button>
         </div>
       </form>
     </Form>
