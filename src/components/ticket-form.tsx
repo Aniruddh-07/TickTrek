@@ -69,7 +69,13 @@ export function TicketForm({ onClose }: TicketFormProps) {
     const assignableUsers = useMemo(() => {
         if (!user) return [];
 
-        // Project-based filtering
+        // Admin can assign to team leads
+        if (user.role === 'admin') {
+            const teamLeadIds = new Set(teams.map(t => t.leadId));
+            return users.filter(u => teamLeadIds.has(u.id) && u.id !== user.id);
+        }
+
+        // Project-based filtering for members
         if (selectedProjectId && selectedProjectId !== 'none') {
             const project = projects.find(p => p.id === selectedProjectId);
             if (project) {
@@ -79,20 +85,16 @@ export function TicketForm({ onClose }: TicketFormProps) {
             }
         }
 
-        // Default role-based filtering
-        if (user.role === 'admin') {
-            const teamLeadIds = new Set(teams.map(t => t.leadId));
-            return users.filter(u => teamLeadIds.has(u.id) && u.id !== user.id);
-        } else {
-            const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
-            const myTeamMembers = new Set<string>();
-            teams.forEach(team => {
-                if (myTeamIds.includes(team.id)) {
-                    team.memberIds.forEach(memberId => myTeamMembers.add(memberId));
-                }
-            });
-            return users.filter(u => myTeamMembers.has(u.id) && u.id !== user.id);
-        }
+        // Default role-based filtering (own team)
+        const myTeamIds = teams.filter(t => t.memberIds.includes(user.id)).map(t => t.id);
+        const myTeamMembers = new Set<string>();
+        teams.forEach(team => {
+            if (myTeamIds.includes(team.id)) {
+                team.memberIds.forEach(memberId => myTeamMembers.add(memberId));
+            }
+        });
+        return users.filter(u => myTeamMembers.has(u.id) && u.id !== user.id);
+        
     }, [user, users, teams, projects, selectedProjectId]);
 
 
@@ -150,7 +152,7 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="none">None (Show my team members)</SelectItem>
+                                    <SelectItem value="none">None (Show default members)</SelectItem>
                                     {availableProjects.map(p => (
                                         <SelectItem key={p.id} value={p.id}>
                                             {p.name}
@@ -174,15 +176,15 @@ export function TicketForm({ onClose }: TicketFormProps) {
                                     <FormControl>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a person" />
-                                    </SelectTrigger>
+                                    </Trigger>
                                     </FormControl>
                                     <SelectContent>
                                         {assignableUsers.map(u => {
                                             const isLead = teams.some(t => t.leadId === u.id);
-                                            const role = user?.role === 'admin' ? 'Lead' : (isLead ? 'Lead' : 'Member');
+                                            const roleText = u.role === 'admin' ? 'Admin' : (isLead ? 'Lead' : 'Member');
                                             return (
                                                 <SelectItem key={u.id} value={u.id}>
-                                                    {u.name} ({role})
+                                                    {u.name} ({roleText})
                                                 </SelectItem>
                                             )
                                         })}
