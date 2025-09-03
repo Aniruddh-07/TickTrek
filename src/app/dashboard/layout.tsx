@@ -263,12 +263,12 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <UserProvider>
-      <TasksProvider>
+    <TasksProvider>
+      <UserProvider>
         <NotificationsProvider>
           <DashboardLayoutContent>{children}</DashboardLayoutContent>
         </NotificationsProvider>
-      </TasksProvider>
-    </UserProvider>
+      </UserProvider>
+    </TasksProvider>
   );
 }
